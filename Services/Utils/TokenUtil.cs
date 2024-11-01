@@ -43,5 +43,12 @@ namespace UserAuthentication_ASPNET.Services.Utils
 
             return GenerateToken(user, configuration, expiry);
         }
+
+        public static string GenerateRefresh(User user, IConfiguration configuration)
+        {
+            var expiry = DateTime.UtcNow.AddHours(Convert.ToDouble(configuration["JWT:RefreshTokenExpiry"]));
+
+            return GenerateToken(user, configuration, expiry);
+        }
     }
 }
