@@ -36,5 +36,12 @@ namespace UserAuthentication_ASPNET.Services.Utils
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        public static string GenerateAccess(User user, IConfiguration configuration)
+        {
+            var expiry = DateTime.UtcNow.AddHours(Convert.ToDouble(configuration["JWT:AccessTokenExpiry"]));
+
+            return GenerateToken(user, configuration, expiry);
+        }
     }
 }
