@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 
@@ -37,3 +38,15 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+
+static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+{
+    // API Versioning
+    services.AddApiVersioning(options =>
+    {
+        options.AssumeDefaultVersionWhenUnspecified = true;
+        options.ReportApiVersions = true;
+        options.DefaultApiVersion = new ApiVersion(1, 0);
+    });
+}
