@@ -1,11 +1,12 @@
 using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Newtonsoft.Json;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using UserAuthentication_ASPNET.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using UserAuthentication_ASPNET.Services.AuthService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,4 +84,10 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key!))
         };
     });
+
+    services.AddLogging();
+
+    services.AddTransient<DataContext>();
+
+    services.AddScoped<IAuthService, AuthService>();
 }
