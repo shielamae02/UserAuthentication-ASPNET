@@ -2,10 +2,7 @@ namespace UserAuthentication_ASPNET.Models.Utils
 {
     public static class Success
     {
-        public static string IS_AUTHENTICATED()
-        {
-            return $"User authenticated successfully";
-        }
+        public const string IS_AUTHENTICATED = "User has been authenticated successfully.";
 
         public static string RESOURCE_RETRIEVED(string resource)
         {
