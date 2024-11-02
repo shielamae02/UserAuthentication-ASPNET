@@ -3,6 +3,7 @@ using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using UserAuthentication_ASPNET.Models.Entities;
+using UserAuthentication_ASPNET.Models.Dtos;
 
 namespace UserAuthentication_ASPNET.Services.Utils
 {
@@ -49,6 +50,15 @@ namespace UserAuthentication_ASPNET.Services.Utils
             var expiry = DateTime.UtcNow.AddHours(Convert.ToDouble(configuration["JWT:RefreshTokenExpiry"]));
 
             return GenerateToken(user, configuration, expiry);
+        }
+
+        public static AuthResponseDto GenerateTokens(User user, IConfiguration configuration)
+        {
+            return new AuthResponseDto
+            {
+                Access = GenerateAccess(user, configuration),
+                Refresh = GenerateRefresh(user, configuration)
+            };
         }
     }
 }
