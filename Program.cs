@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using UserAuthentication_ASPNET.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,5 +50,11 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
         options.AssumeDefaultVersionWhenUnspecified = true;
         options.ReportApiVersions = true;
         options.DefaultApiVersion = new ApiVersion(1, 0);
+    });
+
+    // SQL Server
+    services.AddDbContext<DataContext>(options =>
+    {
+        options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
     });
 }
