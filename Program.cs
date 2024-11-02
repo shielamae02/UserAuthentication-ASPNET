@@ -86,6 +86,13 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
         };
     });
 
+    // Disable automatic model validation
+    services.Configure<ApiBehaviorOptions>(options =>
+    {
+        options.SuppressModelStateInvalidFilter = true;
+    });
+
+
     services.AddLogging();
 
     services.AddTransient<DataContext>();
