@@ -2,10 +2,10 @@ using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using UserAuthentication_ASPNET.Data;
 using UserAuthentication_ASPNET.Models.Dtos;
-using UserAuthentication_ASPNET.Models.Entities;
-using UserAuthentication_ASPNET.Models.Response;
 using UserAuthentication_ASPNET.Models.Utils;
 using UserAuthentication_ASPNET.Services.Utils;
+using UserAuthentication_ASPNET.Models.Entities;
+using UserAuthentication_ASPNET.Models.Response;
 
 namespace UserAuthentication_ASPNET.Services.AuthService
 {
@@ -23,16 +23,11 @@ namespace UserAuthentication_ASPNET.Services.AuthService
             await using var transaction = await context.Database.BeginTransactionAsync();
             try
             {
-                if (!authRegister.Password.Equals(authRegister.ConfirmPassword))
-                {
-                    validationErrors.Add("confirmPassword:", "Passwords do not match.");
-                    return ApiResponse<AuthResponseDto>.ErrorResponse(
-                        Error.ValidationError, Error.ErrorType.ValidationError, validationErrors);
-                }
+                var validationResponse = ValidationUtil.ValidateFields<AuthResponseDto>(authRegister, validationErrors);
 
                 if (await context.Users.AnyAsync(u => u.Email.Equals(authRegister.Email)))
                 {
-                    validationErrors.Add("email", "Invalid email address.");
+                    validationErrors.Add("Email", "Invalid email address.");
                     return ApiResponse<AuthResponseDto>.ErrorResponse(
                         Error.ValidationError, Error.ErrorType.ValidationError, validationErrors);
                 }
