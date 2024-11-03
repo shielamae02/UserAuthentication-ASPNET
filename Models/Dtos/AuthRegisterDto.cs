@@ -29,6 +29,6 @@ namespace UserAuthentication_ASPNET.Models.Dtos
         [Required(ErrorMessage = "Password confirmation is required.")]
         [Compare("Password", ErrorMessage = "Passwords do not match.")]
         [DataType(DataType.Password)]
-        public string ConfirmPassword { get; init; } = string.Empty;
+        public string RePassword { get; init; } = string.Empty;
     }
 }
