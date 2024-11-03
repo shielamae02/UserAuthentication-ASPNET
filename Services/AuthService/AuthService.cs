@@ -50,5 +50,33 @@ namespace UserAuthentication_ASPNET.Services.AuthService
                 return ApiResponse<AuthResponseDto>.ErrorResponse(Error.ERROR_CREATING_RESOURCE("user"), Error.ErrorType.InternalServerError, validationErrors);
             }
         }
+
+
+        public async Task<ApiResponse<AuthResponseDto>> LoginAsync(AuthLoginDto authLogin)
+        {
+            Dictionary<string, string> validationErrors = [];
+
+            var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(authLogin.Email));
+
+            if (user == null)
+            {
+                validationErrors.Add("Email", "Invalid credentials.");
+                return ApiResponse<AuthResponseDto>.ErrorResponse(
+                    Error.Unauthorized, Error.ErrorType.Unauthorized, validationErrors);
+            }
+
+            if (!PasswordUtil.VerifyPassword(user.Password, authLogin.Password))
+            {
+                validationErrors.Add("Password", "Invalid credentials.");
+                return ApiResponse<AuthResponseDto>.ErrorResponse(
+                    Error.Unauthorized, Error.ErrorType.Unauthorized, validationErrors);
+            }
+
+            var authDto = TokenUtil.GenerateTokens(user, configuration);
+
+            await context.SaveChangesAsync();
+            return ApiResponse<AuthResponseDto>.SuccessResponse(
+                Success.IS_AUTHENTICATED, authDto);
+        }
     }
 }
