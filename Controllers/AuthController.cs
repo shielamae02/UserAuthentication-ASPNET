@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using UserAuthentication_ASPNET.Controllers.Utils;
 using UserAuthentication_ASPNET.Models.Dtos;
+using UserAuthentication_ASPNET.Controllers.Utils;
 using UserAuthentication_ASPNET.Services.AuthService;
 
 namespace UserAuthentication_ASPNET.Controllers
@@ -21,6 +17,11 @@ namespace UserAuthentication_ASPNET.Controllers
         {
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ControllerUtil.GenerateValidationErrorResponse<AuthResponseDto>(ModelState));
+                }
+
                 var response = await authService.RegisterAsync(authRegister);
 
                 if (response.Status.Equals("error"))
