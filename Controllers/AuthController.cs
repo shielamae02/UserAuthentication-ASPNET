@@ -40,5 +40,33 @@ namespace UserAuthentication_ASPNET.Controllers
             }
         }
 
+
+        [HttpPost("login")]
+        public async Task<IActionResult> LoginUser([FromBody] AuthLoginDto authLogin)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
+                }
+
+                var response = await authService.LoginAsync(authLogin);
+
+                if (response.Status.Equals("error"))
+                {
+                    logger.LogWarning("Login attempt failed for email: {Email}", authLogin.Email);
+                    return ControllerUtil.GetActionResultFromError(response);
+                }
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                logger.LogCritical(ex, "Login failed unexpectedly for email: {Email}.", authLogin.Email);
+                return Problem("An error occured while processing your request.");
+            }
+        }
+
     }
 }
