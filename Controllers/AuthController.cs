@@ -3,70 +3,69 @@ using UserAuthentication_ASPNET.Models.Dtos;
 using UserAuthentication_ASPNET.Controllers.Utils;
 using UserAuthentication_ASPNET.Services.AuthService;
 
-namespace UserAuthentication_ASPNET.Controllers
+namespace UserAuthentication_ASPNET.Controllers;
+
+[ApiController]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/auth")]
+public class AuthController(
+    IAuthService authService,
+    ILogger<AuthController> logger) : ControllerBase
 {
-    [ApiController]
-    [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/auth")]
-    public class AuthController(
-        IAuthService authService,
-        ILogger<AuthController> logger) : ControllerBase
+    [HttpPost("register")]
+    public async Task<IActionResult> RegisterUser([FromBody] AuthRegisterDto authRegister)
     {
-        [HttpPost("register")]
-        public async Task<IActionResult> RegisterUser([FromBody] AuthRegisterDto authRegister)
+        try
         {
-            try
+            if (!ModelState.IsValid)
             {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
-                }
-
-                var response = await authService.RegisterAsync(authRegister);
-
-                if (response.Status.Equals("error"))
-                {
-                    logger.LogWarning("Registration attempt failed for email: {Email}", authRegister.Email);
-                    return ControllerUtil.GetActionResultFromError(response);
-                }
-
-                logger.LogInformation("Registration successful for email: {Email}", authRegister.Email);
-                return StatusCode(201, response);
+                return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
             }
-            catch (Exception ex)
+
+            var response = await authService.RegisterAsync(authRegister);
+
+            if (response.Status.Equals("error"))
             {
-                logger.LogCritical(ex, "Registration failed unexpectedly for email: {Email}.", authRegister.Email);
-                return Problem("An error occured while processing your request.");
+                logger.LogWarning("Registration attempt failed for email: {Email}", authRegister.Email);
+                return ControllerUtil.GetActionResultFromError(response);
             }
+
+            logger.LogInformation("Registration successful for email: {Email}", authRegister.Email);
+            return StatusCode(201, response);
         }
-
-
-        [HttpPost("login")]
-        public async Task<IActionResult> LoginUser([FromBody] AuthLoginDto authLogin)
+        catch (Exception ex)
         {
-            try
-            {
-                if (!ModelState.IsValid)
-                {
-                    return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
-                }
-
-                var response = await authService.LoginAsync(authLogin);
-
-                if (response.Status.Equals("error"))
-                {
-                    logger.LogWarning("Login attempt failed for email: {Email}", authLogin.Email);
-                    return ControllerUtil.GetActionResultFromError(response);
-                }
-
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                logger.LogCritical(ex, "Login failed unexpectedly for email: {Email}.", authLogin.Email);
-                return Problem("An error occured while processing your request.");
-            }
+            logger.LogCritical(ex, "Registration failed unexpectedly for email: {Email}.", authRegister.Email);
+            return Problem("An error occured while processing your request.");
         }
-
     }
+
+
+    [HttpPost("login")]
+    public async Task<IActionResult> LoginUser([FromBody] AuthLoginDto authLogin)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
+            }
+
+            var response = await authService.LoginAsync(authLogin);
+
+            if (response.Status.Equals("error"))
+            {
+                logger.LogWarning("Login attempt failed for email: {Email}", authLogin.Email);
+                return ControllerUtil.GetActionResultFromError(response);
+            }
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            logger.LogCritical(ex, "Login failed unexpectedly for email: {Email}.", authLogin.Email);
+            return Problem("An error occured while processing your request.");
+        }
+    }
+
 }
