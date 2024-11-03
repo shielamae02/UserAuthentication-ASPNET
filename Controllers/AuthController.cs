@@ -19,7 +19,7 @@ namespace UserAuthentication_ASPNET.Controllers
             {
                 if (!ModelState.IsValid)
                 {
-                    return BadRequest(ControllerUtil.GenerateValidationErrorResponse<AuthResponseDto>(ModelState));
+                    return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
                 }
 
                 var response = await authService.RegisterAsync(authRegister);
