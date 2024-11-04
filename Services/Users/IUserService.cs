@@ -5,5 +5,5 @@ namespace UserAuthentication_ASPNET.Services.Users;
 
 public interface IUserService
 {
-
+    public Task<ApiResponse<UserDetailsDto>> GetUserDetailsAsync(int id);
 }
