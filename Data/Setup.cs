@@ -14,6 +14,17 @@ public partial class DataContext
             })
             .IsUnique();
 
+        modelBuilder.Entity<User>()
+            .HasMany(u => u.Tokens)
+            .WithOne(t => t.User)
+            .HasForeignKey(t => t.UserId);
+
+        modelBuilder.Entity<Token>()
+            .HasIndex(t => new
+            {
+                t.Refresh
+            });
+
         base.OnModelCreating(modelBuilder);
     }
 }
