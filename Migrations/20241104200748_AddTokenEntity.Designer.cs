@@ -12,7 +12,7 @@ using UserAuthentication_ASPNET.Data;
 namespace UserAuthentication_ASPNET.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20241104195430_AddTokenEntity")]
+    [Migration("20241104200748_AddTokenEntity")]
     partial class AddTokenEntity
     {
         /// <inheritdoc />
@@ -39,6 +39,9 @@ namespace UserAuthentication_ASPNET.Migrations
                     b.Property<DateTime>("Expiration")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Refresh")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -48,9 +51,6 @@ namespace UserAuthentication_ASPNET.Migrations
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
-
-                    b.Property<bool>("isRevoked")
-                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
