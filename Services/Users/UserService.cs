@@ -10,5 +10,13 @@ public class UserService(
     DataContext context,
     IMapper mapper) : IUserService
 {
+    public async Task<ApiResponse<UserDetailsDto>> GetUserDetailsAsync(int id)
+    {
+        var user = await context.Users.FirstOrDefaultAsync(
+            u => u.Id.Equals(id));
 
+        var userDetails = mapper.Map<UserDetailsDto>(user);
+
+        return ApiResponse<UserDetailsDto>.SuccessResponse(Success.RESOURCE_RETRIEVED("User"), userDetails);
+    }
 }
