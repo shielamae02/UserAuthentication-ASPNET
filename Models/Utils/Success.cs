@@ -6,20 +6,20 @@ public static class Success
 
     public static string RESOURCE_RETRIEVED(string resource)
     {
-        return $"{resource} has been successfully retrieved";
+        return $"{resource} has been successfully retrieved.";
     }
     public static string RESOURCE_CREATED(string resource)
     {
-        return $"{resource} has been successfully created";
+        return $"{resource} has been successfully created.";
     }
 
     public static string RESOURCE_UPDATED(string resource)
     {
-        return $"{resource} has been successfully updated";
+        return $"{resource} has been successfully updated.";
     }
 
     public static string RESOURCE_DELETED(string resource)
     {
-        return $"{resource} has been successfully deleted";
+        return $"{resource} has been successfully deleted.";
     }
 }
