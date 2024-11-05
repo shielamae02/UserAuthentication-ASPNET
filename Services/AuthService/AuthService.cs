@@ -28,7 +28,7 @@ public class AuthService(
 
             if (await context.Users.AnyAsync(u => u.Email.Equals(authRegister.Email)))
             {
-                validationErrors.Add("Email", "Invalid email address.");
+                validationErrors.Add("email", "Invalid email address.");
                 return ApiResponse<AuthResponseDto>.ErrorResponse(
                     Error.ValidationError, Error.ErrorType.ValidationError, validationErrors);
             }
