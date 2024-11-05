@@ -35,9 +35,22 @@ public class AuthService(
             var user = mapper.Map<User>(authRegister);
             user.Password = PasswordUtil.HashPassword(authRegister.Password);
 
+            await context.Users.AddAsync(user);
+            await context.SaveChangesAsync();
+
             var authDto = TokenUtil.GenerateTokens(user, configuration);
 
-            await context.Users.AddAsync(user);
+            var token = new Token
+            {
+                UserId = user.Id,
+                User = user,
+                Refresh = authDto.Refresh,
+                Expiration = DateTime.UtcNow.AddDays(
+                    Convert.ToDouble(configuration["JWT:RefreshTokenExpiry"]))
+            };
+
+            user.Tokens.Add(token);
+            await context.Tokens.AddAsync(token);
             await context.SaveChangesAsync();
             await transaction.CommitAsync();
 
@@ -83,10 +96,10 @@ public class AuthService(
         var token = await context.Tokens.FirstOrDefaultAsync(
             u => u.Refresh.Equals(refreshToken));
 
-        if (token is null || token.isRevoked || token.Expiration < DateTime.UtcNow)
+        if (token is null || token.IsRevoked || token.Expiration < DateTime.UtcNow)
             return false;
 
-        token.isRevoked = true;
+        token.IsRevoked = true;
         await context.SaveChangesAsync();
 
         return true;
