@@ -60,4 +60,30 @@ public class TokenUtil
             Refresh = GenerateRefresh(user, configuration)
         };
     }
+
+    public static ClaimsPrincipal? ValidateRefreshToken(string refreshToken, IConfiguration configuration)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = Encoding.UTF8.GetBytes(configuration["JWT:Key"]!);
+
+        try
+        {
+            var principal = tokenHandler.ValidateToken(refreshToken, new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = true,
+                ValidIssuer = configuration["JWT:Issuer"],
+                ValidateAudience = true,
+                ValidAudience = configuration["JWT:Audience"],
+                ValidateLifetime = true,
+            }, out SecurityToken validatedToken);
+
+            return principal;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
 }
