@@ -40,7 +40,6 @@ public class AuthController(
         }
     }
 
-
     [HttpPost("login")]
     public async Task<IActionResult> LoginUser([FromBody] AuthLoginDto authLogin)
     {
@@ -68,4 +67,30 @@ public class AuthController(
         }
     }
 
+    [HttpPost("refresh")]
+    public async Task<IActionResult> RefreshUserTokens([FromBody] string refreshToken)
+    {
+        try
+        {
+            var userId = ControllerUtil.GetUserId(User);
+
+            if (userId == 1)
+                return Unauthorized();
+
+            var response = await authService.RefreshUserTokensAsync(refreshToken);
+            if (response.Status.Equals("error"))
+            {
+                logger.LogWarning("Failed to refresh token for userId: {UserId}", userId);
+                return ControllerUtil.GetActionResultFromError(response);
+            }
+
+            logger.LogInformation("Successfully refreshed token for userId: {UserId}", userId);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            logger.LogCritical(ex, "Refreshing of token failed.");
+            return Problem("An error occured while processing your request.");
+        }
+    }
 }
