@@ -6,6 +6,7 @@ using UserAuthentication_ASPNET.Models.Entities;
 using UserAuthentication_ASPNET.Models.Dtos;
 
 namespace UserAuthentication_ASPNET.Services.Utils;
+
 public class TokenUtil
 {
     private static string GenerateToken(User user, IConfiguration configuration, DateTime expires, bool isAccessToken = true)
@@ -48,7 +49,7 @@ public class TokenUtil
     {
         var expiry = DateTime.UtcNow.AddHours(Convert.ToDouble(configuration["JWT:RefreshTokenExpiry"]));
 
-        return GenerateToken(user, configuration, expiry);
+        return GenerateToken(user, configuration, expiry, isAccessToken: false);
     }
 
     public static AuthResponseDto GenerateTokens(User user, IConfiguration configuration)
