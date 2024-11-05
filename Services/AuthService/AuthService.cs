@@ -69,24 +69,35 @@ public class AuthService(
     {
         Dictionary<string, string> validationErrors = [];
 
+        var validationResponse = ValidationUtil.ValidateFields<AuthResponseDto>(authLogin, validationErrors);
+
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(authLogin.Email));
 
         if (user == null)
         {
-            validationErrors.Add("Email", "Invalid credentials.");
+            validationErrors.Add("email", "Invalid credentials.");
             return ApiResponse<AuthResponseDto>.ErrorResponse(
                 Error.Unauthorized, Error.ErrorType.Unauthorized, validationErrors);
         }
 
         if (!PasswordUtil.VerifyPassword(user.Password, authLogin.Password))
         {
-            validationErrors.Add("Password", "Invalid credentials.");
+            validationErrors.Add("password", "Invalid credentials.");
             return ApiResponse<AuthResponseDto>.ErrorResponse(
                 Error.Unauthorized, Error.ErrorType.Unauthorized, validationErrors);
         }
 
         var authDto = TokenUtil.GenerateTokens(user, configuration);
 
+        var token = new Token
+        {
+            User = user,
+            UserId = user.Id,
+            Refresh = authDto.Refresh,
+            Expiration = DateTime.UtcNow.AddDays(Convert.ToDouble(configuration["JWT:RefreshTokenExpiry"]))
+        };
+
+        await context.Tokens.AddAsync(token);
         await context.SaveChangesAsync();
         return ApiResponse<AuthResponseDto>.SuccessResponse(
             Success.IS_AUTHENTICATED, authDto);
@@ -113,7 +124,7 @@ public class AuthService(
         var principal = TokenUtil.ValidateRefreshToken(refreshToken, configuration);
         if (principal == null)
         {
-            validationErrors.Add("Token", "Invalid refresh token.");
+            validationErrors.Add("token", "Invalid refresh token.");
             return ApiResponse<AuthResponseDto>.ErrorResponse(
                 Error.Unauthorized, Error.ErrorType.Unauthorized, validationErrors);
         }
