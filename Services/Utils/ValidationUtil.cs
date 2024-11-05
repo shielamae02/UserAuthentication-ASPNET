@@ -20,7 +20,8 @@ public static class ValidationUtil
             {
                 foreach (var memberName in validationResult.MemberNames)
                 {
-                    validationErrors[memberName] = validationResult.ErrorMessage;
+                    var newMemberName = char.ToLower(memberName[0]) + memberName[1..];
+                    validationErrors[newMemberName] = validationResult.ErrorMessage ?? "";
                 }
             }
 
