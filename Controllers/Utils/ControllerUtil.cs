@@ -42,7 +42,7 @@ public static class ControllerUtil
 
         return ApiResponse<T>.ErrorResponse(
             "Validation failed.",
-            Error.ErrorType.ValidationError,
+            ErrorType.ValidationError,
             validationErrors
         );
     }
