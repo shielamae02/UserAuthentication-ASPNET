@@ -36,6 +36,9 @@ namespace UserAuthentication_ASPNET.Migrations
                     b.Property<DateTime>("Expiration")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Refresh")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -45,9 +48,6 @@ namespace UserAuthentication_ASPNET.Migrations
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
-
-                    b.Property<bool>("isRevoked")
-                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
