@@ -6,9 +6,10 @@ using Newtonsoft.Json.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using UserAuthentication_ASPNET.Data;
+using UserAuthentication_ASPNET.Services;
+using UserAuthentication_ASPNET.Services.Users;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using UserAuthentication_ASPNET.Services.AuthService;
-using UserAuthentication_ASPNET.Services.Users;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -133,6 +134,8 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
     services.AddLogging();
 
     services.AddTransient<DataContext>();
+
+    services.AddHostedService<AuthBackgroundService>();
 
     services.AddScoped<IAuthService, AuthService>();
     services.AddScoped<IUserService, UserService>();
