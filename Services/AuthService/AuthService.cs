@@ -170,5 +170,16 @@ public class AuthService(
 
         return ApiResponse<AuthResponseDto>.SuccessResponse(Success.IS_AUTHENTICATED, newAccessToken);
     }
+    public async Task RemoveRevokedTokenAsync()
+    {
+        var tokens = await context.Tokens
+            .Where(t => t.IsRevoked || t.Expiration < DateTime.UtcNow)
+            .ToListAsync();
 
+        if (tokens.Count != 0)
+        {
+            context.Tokens.RemoveRange(tokens);
+            await context.SaveChangesAsync();
+        }
+    }
 }
