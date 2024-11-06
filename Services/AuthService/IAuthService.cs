@@ -9,4 +9,5 @@ public interface IAuthService
     Task<ApiResponse<AuthResponseDto>> LoginAsync(AuthLoginDto authLogin);
     Task<bool> LogoutAsync(string refreshToken);
     Task<ApiResponse<AuthResponseDto>> RefreshUserTokensAsync(string refreshToken);
+    Task RemoveRevokedTokenAsync();
 }
