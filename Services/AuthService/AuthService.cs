@@ -24,7 +24,7 @@ public class AuthService(
         await using var transaction = await context.Database.BeginTransactionAsync();
         try
         {
-            var validationResponse = ValidationUtil.ValidateFields<AuthResponseDto>(authRegister, validationErrors);
+            ValidationUtil.ValidateFields(authRegister, validationErrors);
 
             if (await context.Users.AnyAsync(u => u.Email.Equals(authRegister.Email)))
             {
@@ -69,7 +69,8 @@ public class AuthService(
     {
         Dictionary<string, string> validationErrors = [];
 
-        var validationResponse = ValidationUtil.ValidateFields<AuthResponseDto>(authLogin, validationErrors);
+        // var validationResponse = ValidationUtil.ValidateFields<AuthResponseDto>(authLogin, validationErrors);
+        ValidationUtil.ValidateFields(authLogin, validationErrors);
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(authLogin.Email));
 
