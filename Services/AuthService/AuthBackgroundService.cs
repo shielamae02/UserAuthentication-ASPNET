@@ -13,7 +13,7 @@ public class AuthBackgroundService(
         {
             var currentTime = DateTime.UtcNow;
 
-            if (currentTime.Hour == 0 && currentTime.Minute == 0)
+            if (currentTime.Hour == 0 && currentTime.Minute == 10)
             {
                 using var scope = serviceProvider.CreateScope();
 
