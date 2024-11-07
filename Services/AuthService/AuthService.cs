@@ -24,7 +24,6 @@ public class AuthService(
         await using var transaction = await context.Database.BeginTransactionAsync();
         try
         {
-            var validationResponse = ValidationUtil.ValidateFields<AuthResponseDto>(authRegister, validationErrors);
 
             if (await context.Users.AnyAsync(u => u.Email.Equals(authRegister.Email)))
             {
@@ -69,20 +68,11 @@ public class AuthService(
     {
         Dictionary<string, string> validationErrors = [];
 
-        var validationResponse = ValidationUtil.ValidateFields<AuthResponseDto>(authLogin, validationErrors);
-
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(authLogin.Email));
 
-        if (user == null)
+        if (user == null || !PasswordUtil.VerifyPassword(user.Password, authLogin.Password))
         {
-            validationErrors.Add("email", "Invalid credentials.");
-            return ApiResponse<AuthResponseDto>.ErrorResponse(
-                Error.Unauthorized, Error.ErrorType.Unauthorized, validationErrors);
-        }
-
-        if (!PasswordUtil.VerifyPassword(user.Password, authLogin.Password))
-        {
-            validationErrors.Add("password", "Invalid credentials.");
+            validationErrors.Add("user", "Invalid credentials.");
             return ApiResponse<AuthResponseDto>.ErrorResponse(
                 Error.Unauthorized, Error.ErrorType.Unauthorized, validationErrors);
         }
@@ -173,5 +163,16 @@ public class AuthService(
 
         return ApiResponse<AuthResponseDto>.SuccessResponse(Success.IS_AUTHENTICATED, newAccessToken);
     }
+    public async Task RemoveRevokedTokenAsync()
+    {
+        var tokens = await context.Tokens
+            .Where(t => t.IsRevoked || t.Expiration < DateTime.UtcNow)
+            .ToListAsync();
 
+        if (tokens.Count != 0)
+        {
+            context.Tokens.RemoveRange(tokens);
+            await context.SaveChangesAsync();
+        }
+    }
 }

@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using UserAuthentication_ASPNET.Models.Response;
-using UserAuthentication_ASPNET.Models.Utils;
 using static UserAuthentication_ASPNET.Models.Utils.Error;
 
 namespace UserAuthentication_ASPNET.Controllers.Utils;
@@ -36,7 +35,7 @@ public static class ControllerUtil
         var validationErrors = modelState
                    .Where(ms => ms.Value.Errors.Count > 0)
                    .ToDictionary(
-                       kvp => kvp.Key,
+                        kvp => char.ToLower(kvp.Key[0]) + kvp.Key[1..],
                        kvp => string.Join("; ", kvp.Value.Errors.Select(e => e.ErrorMessage))
                    );
 
