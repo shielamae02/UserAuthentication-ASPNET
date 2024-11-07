@@ -70,16 +70,9 @@ public class AuthService(
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(authLogin.Email));
 
-        if (user == null)
+        if (user == null || !PasswordUtil.VerifyPassword(user.Password, authLogin.Password))
         {
-            validationErrors.Add("email", "Invalid credentials.");
-            return ApiResponse<AuthResponseDto>.ErrorResponse(
-                Error.Unauthorized, Error.ErrorType.Unauthorized, validationErrors);
-        }
-
-        if (!PasswordUtil.VerifyPassword(user.Password, authLogin.Password))
-        {
-            validationErrors.Add("password", "Invalid credentials.");
+            validationErrors.Add("user", "Invalid credentials.");
             return ApiResponse<AuthResponseDto>.ErrorResponse(
                 Error.Unauthorized, Error.ErrorType.Unauthorized, validationErrors);
         }
