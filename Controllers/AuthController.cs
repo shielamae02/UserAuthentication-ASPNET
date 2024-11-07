@@ -93,4 +93,27 @@ public class AuthController(
             return Problem("An error occured while processing your request.");
         }
     }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> LogoutUser([FromBody] string refreshToken)
+    {
+        try
+        {
+            var response = await authService.LogoutAsync(refreshToken);
+
+            if (!response)
+            {
+                logger.LogWarning("Logout failed.");
+                return BadRequest();
+            }
+
+            logger.LogInformation("User successfully logged out.");
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            logger.LogCritical(ex, "Error in logging out user.");
+            return Problem("An error occurred while processing your request.");
+        }
+    }
 }
