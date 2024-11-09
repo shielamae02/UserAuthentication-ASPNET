@@ -8,8 +8,10 @@ using Microsoft.IdentityModel.Tokens;
 using UserAuthentication_ASPNET.Data;
 using UserAuthentication_ASPNET.Services;
 using UserAuthentication_ASPNET.Services.Users;
+using UserAuthentication_ASPNET.Services.Emails;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using UserAuthentication_ASPNET.Services.AuthService;
+using UserAuthentication_ASPNET.Models.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +31,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddSwaggerGen();
+
+builder.Services.Configure<Smtp>(builder.Configuration.GetSection("SMTP"));
 
 ConfigureServices(builder.Services, builder.Configuration);
 var app = builder.Build();
@@ -135,7 +139,11 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
 
     services.AddTransient<DataContext>();
 
+    services.AddSingleton<IEmailService, EmailService>();
+    services.AddSingleton<EmailQueue>();
+
     services.AddHostedService<AuthBackgroundService>();
+    services.AddHostedService<EmailBackgroundService>();
 
     services.AddScoped<IAuthService, AuthService>();
     services.AddScoped<IUserService, UserService>();
