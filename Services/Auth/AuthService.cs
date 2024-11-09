@@ -178,4 +178,36 @@ public class AuthService(
             await context.SaveChangesAsync();
         }
     }
+
+    public async Task<ApiResponse<string>> ForgotPasswordAsync(string email)
+    {
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(email));
+        if (user == null)
+        {
+            return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, null);
+        }
+
+        var resetToken = TokenUtil.GeneratePasswordResetToken(user, configuration);
+
+        var resetLink = $"https:///reset-password?token={resetToken}";
+
+        var isEmailSent = await emailService.SendEmailAsync(
+            emails: [email],
+            subject: "Password Reset Request",
+            content: resetLink
+        );
+
+        if (!isEmailSent)
+        {
+            return ApiResponse<string>.ErrorResponse(
+                Error.EmailSendFailed,
+                Error.ErrorType.BadRequest,
+                new Dictionary<string, string>{{
+                    "email", "Failed to send email for password reset."
+                }}
+            );
+        }
+
+        return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, null);
+    }
 }
