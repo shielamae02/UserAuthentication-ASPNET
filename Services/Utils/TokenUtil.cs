@@ -56,6 +56,13 @@ public class TokenUtil
         return GenerateToken(user, configuration, expiry, isAccessToken: false);
     }
 
+    public static string GeneratePasswordResetToken(User user, IConfiguration configuration)
+    {
+        var expiry = DateTime.UtcNow.AddHours(1);
+
+        return GenerateToken(user, configuration, expiry, isAccessToken: false, isPasswordResetToken: true);
+    }
+
     public static AuthResponseDto GenerateTokens(User user, IConfiguration configuration)
     {
         return new AuthResponseDto
