@@ -3,11 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using UserAuthentication_ASPNET.Data;
 using System.IdentityModel.Tokens.Jwt;
 using UserAuthentication_ASPNET.Models.Dtos;
+using System.ComponentModel.DataAnnotations;
 using UserAuthentication_ASPNET.Models.Utils;
 using UserAuthentication_ASPNET.Services.Utils;
 using UserAuthentication_ASPNET.Models.Entities;
 using UserAuthentication_ASPNET.Models.Response;
-using Microsoft.AspNetCore.Identity;
 using UserAuthentication_ASPNET.Services.Emails;
 
 namespace UserAuthentication_ASPNET.Services.AuthService;
@@ -181,6 +181,18 @@ public class AuthService(
 
     public async Task<ApiResponse<string>> ForgotPasswordAsync(string email)
     {
+        var emailValidation = new EmailAddressAttribute();
+        if (!emailValidation.IsValid(email))
+        {
+            return ApiResponse<string>.ErrorResponse(
+                Error.ValidationError,
+                Error.ErrorType.ValidationError,
+                new Dictionary<string, string> {{
+                    "email", "Invalid email address format."
+                }}
+            );
+        }
+
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(email));
         if (user == null)
         {
