@@ -7,12 +7,15 @@ using UserAuthentication_ASPNET.Models.Utils;
 using UserAuthentication_ASPNET.Services.Utils;
 using UserAuthentication_ASPNET.Models.Entities;
 using UserAuthentication_ASPNET.Models.Response;
+using Microsoft.AspNetCore.Identity;
+using UserAuthentication_ASPNET.Services.Emails;
 
 namespace UserAuthentication_ASPNET.Services.AuthService;
 
 public class AuthService(
     DataContext context,
     IMapper mapper,
+    IEmailService emailService,
     IConfiguration configuration,
     ILogger<AuthService> logger
 ) : IAuthService
