@@ -9,7 +9,7 @@ namespace UserAuthentication_ASPNET.Services.Utils;
 
 public class TokenUtil
 {
-    private static string GenerateToken(User user, IConfiguration configuration, DateTime expires, bool isAccessToken = true)
+    private static string GenerateToken(User user, IConfiguration configuration, DateTime expires, bool isAccessToken = true, bool isPasswordResetToken = false)
     {
         var claims = new List<Claim>
             {
@@ -22,6 +22,10 @@ public class TokenUtil
         {
             claims.Add(new(ClaimTypes.Email, user.Email));
             claims.Add(new(ClaimTypes.NameIdentifier, user.Id.ToString()));
+        }
+        else if (isPasswordResetToken)
+        {
+            claims.Add(new("purpose", "password-reset"));
         }
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Key"]!));
@@ -42,7 +46,7 @@ public class TokenUtil
     {
         var expiry = DateTime.UtcNow.AddHours(Convert.ToDouble(configuration["JWT:AccessTokenExpiry"]));
 
-        return GenerateToken(user, configuration, expiry);
+        return GenerateToken(user, configuration, expiry, isAccessToken: true);
     }
 
     public static string GenerateRefresh(User user, IConfiguration configuration)
