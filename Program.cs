@@ -56,21 +56,25 @@ app.Run();
 
 static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
 {
-    // API Versioning
+    #region API Versioning
     services.AddApiVersioning(options =>
     {
         options.AssumeDefaultVersionWhenUnspecified = true;
         options.ReportApiVersions = true;
         options.DefaultApiVersion = new ApiVersion(1, 0);
     });
+    #endregion
 
-    // SQL Server
+
+    #region SQL Server
     services.AddDbContext<DataContext>(options =>
     {
         options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
     });
+    #endregion
 
-    // Authentication
+
+    #region Authentication
     var jwt = configuration.GetSection("JWT");
     var key = jwt["Key"];
 
@@ -92,8 +96,10 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key!))
         };
     });
+    #endregion
 
-    // Swagger Docs
+
+    #region Swagger Docs
     services.AddSwaggerGen(c =>
     {
         c.SwaggerDoc("v1", new OpenApiInfo
@@ -127,12 +133,15 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
             }
         });
     });
+    #endregion
 
-    // Disable automatic model validation
+
+    #region Suppress model validation
     services.Configure<ApiBehaviorOptions>(options =>
     {
         options.SuppressModelStateInvalidFilter = true;
     });
+    #endregion
 
 
     services.AddLogging();
