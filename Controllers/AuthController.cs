@@ -89,7 +89,7 @@ public class AuthController(
         }
         catch (Exception ex)
         {
-            logger.LogCritical(ex, "Refreshing of token failed.");
+            logger.LogCritical(ex, "Failed to refresh token.");
             return Problem("An error occured while processing your request.");
         }
     }
@@ -113,6 +113,27 @@ public class AuthController(
         catch (Exception ex)
         {
             logger.LogCritical(ex, "Error in logging out user.");
+            return Problem("An error occurred while processing your request.");
+        }
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] string email)
+    {
+        try
+        {
+            var response = await authService.ForgotPasswordAsync(email);
+
+            if (response.Status.Equals("error"))
+            {
+                return ControllerUtil.GetActionResultFromError(response);
+            }
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            logger.LogCritical(ex, "Failed to send email for password reset.");
             return Problem("An error occurred while processing your request.");
         }
     }
