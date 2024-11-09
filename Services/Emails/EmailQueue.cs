@@ -10,5 +10,10 @@ public class EmailQueue
         _emailQueue.Enqueue((emails, subject, content));
     }
 
+    public bool TryDequeue(out (IEnumerable<string> emails, string subject, string content) email)
+    {
+        return _emailQueue.TryDequeue(out email);
+    }
+
 
 }
