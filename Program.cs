@@ -6,6 +6,7 @@ using Newtonsoft.Json.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using UserAuthentication_ASPNET.Data;
+using System.IdentityModel.Tokens.Jwt;
 using UserAuthentication_ASPNET.Services;
 using UserAuthentication_ASPNET.Services.Users;
 using UserAuthentication_ASPNET.Services.Emails;
@@ -45,6 +46,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Prevent Microsoft Identity override claim names
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
 app.UseAuthentication();
 app.UseAuthorization();
