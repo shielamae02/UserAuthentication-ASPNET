@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using UserAuthentication_ASPNET.Models.Dtos;
+using UserAuthentication_ASPNET.Models.Dtos.Auth;
 using UserAuthentication_ASPNET.Controllers.Utils;
 using UserAuthentication_ASPNET.Services.AuthService;
 
@@ -134,6 +135,32 @@ public class AuthController(
         catch (Exception ex)
         {
             logger.LogCritical(ex, "Failed to send email for password reset.");
+            return Problem("An error occurred while processing your request.");
+        }
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] AuthResetPasswordDto resetPasswordDto)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
+            }
+
+            var response = await authService.ResetPasswordAsync(resetPasswordDto);
+
+            if (response.Status.Equals("error"))
+            {
+                return ControllerUtil.GetActionResultFromError(response);
+            }
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            logger.LogInformation(ex, "Failed to reset user password.");
             return Problem("An error occurred while processing your request.");
         }
     }
