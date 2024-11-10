@@ -9,6 +9,7 @@ using UserAuthentication_ASPNET.Services.Utils;
 using UserAuthentication_ASPNET.Models.Entities;
 using UserAuthentication_ASPNET.Models.Response;
 using UserAuthentication_ASPNET.Services.Emails;
+using UserAuthentication_ASPNET.Models.Dtos.Auth;
 
 namespace UserAuthentication_ASPNET.Services.AuthService;
 
@@ -27,7 +28,6 @@ public class AuthService(
         await using var transaction = await context.Database.BeginTransactionAsync();
         try
         {
-
             if (await context.Users.AnyAsync(u => u.Email.Equals(authRegister.Email)))
             {
                 validationErrors.Add("email", "Invalid email address.");
@@ -220,6 +220,54 @@ public class AuthService(
             );
         }
 
-        return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, null);
+        return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, resetToken);
+    }
+
+    public async Task<ApiResponse<string>> ResetPasswordAsync(AuthResetPasswordDto resetPasswordDto)
+    {
+        Dictionary<string, string> validationErrors = [];
+
+        var principal = TokenUtil.ValidateRefreshToken(resetPasswordDto.Token, configuration);
+
+        if (principal == null)
+        {
+            validationErrors.Add("token", "Invalid token payload.");
+            return ApiResponse<string>.ErrorResponse(
+                Error.Unauthorized,
+                Error.ErrorType.Unauthorized,
+                validationErrors
+            );
+        }
+
+        var purposeClaim = principal.Claims.FirstOrDefault(c => c.Type == "purpose" && c.Value == "password-reset");
+        var userIdClaim = principal.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
+
+        if (purposeClaim == null || userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+        {
+            validationErrors.Add("token", "Invalid token payload.");
+            return ApiResponse<string>.ErrorResponse(
+                Error.Unauthorized,
+                Error.ErrorType.Unauthorized,
+                validationErrors
+            );
+        }
+
+        // Find the user
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user == null)
+        {
+            validationErrors.Add("user", "Invalid credentials.");
+            return ApiResponse<string>.ErrorResponse(
+               Error.Unauthorized,
+               Error.ErrorType.Unauthorized,
+               validationErrors
+           );
+        }
+
+        user.Password = PasswordUtil.HashPassword(resetPasswordDto.Password);
+        await context.SaveChangesAsync();
+
+        return ApiResponse<string>.SuccessResponse(
+            Success.PASSWORD_RESET_SUCCESSFUL, null);
     }
 }
