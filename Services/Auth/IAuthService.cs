@@ -11,6 +11,6 @@ public interface IAuthService
     Task<bool> LogoutAsync(string refreshToken);
     Task<ApiResponse<AuthResponseDto>> RefreshUserTokensAsync(string refreshToken);
     Task RemoveRevokedTokenAsync();
-    Task<ApiResponse<string>> ForgotPasswordAsync(string email);
+    Task<ApiResponse<string>> ForgotPasswordAsync(AuthForgotPasswordDto forgotPasswordDto);
     Task<ApiResponse<string>> ResetPasswordAsync(AuthResetPasswordDto resetPasswordDto);
 }
