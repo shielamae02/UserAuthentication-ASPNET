@@ -72,7 +72,7 @@ public class TokenUtil
         };
     }
 
-    public static ClaimsPrincipal? ValidateRefreshToken(string refreshToken, IConfiguration configuration)
+    public static ClaimsPrincipal? ValidateToken(string refreshToken, IConfiguration configuration)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(configuration["JWT:Key"]!);
