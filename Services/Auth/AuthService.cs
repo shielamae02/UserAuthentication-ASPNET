@@ -179,21 +179,9 @@ public class AuthService(
         }
     }
 
-    public async Task<ApiResponse<string>> ForgotPasswordAsync(string email)
+    public async Task<ApiResponse<string>> ForgotPasswordAsync(AuthForgotPasswordDto forgotPasswordDto)
     {
-        var emailValidation = new EmailAddressAttribute();
-        if (!emailValidation.IsValid(email))
-        {
-            return ApiResponse<string>.ErrorResponse(
-                Error.ValidationError,
-                Error.ErrorType.ValidationError,
-                new Dictionary<string, string> {{
-                    "email", "Invalid email address format."
-                }}
-            );
-        }
-
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(email));
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(forgotPasswordDto.Email));
         if (user == null)
         {
             return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, null);
@@ -204,7 +192,7 @@ public class AuthService(
         var resetLink = $"https:///reset-password?token={resetToken}";
 
         var isEmailSent = await emailService.SendEmailAsync(
-            emails: [email],
+            emails: [forgotPasswordDto.Email],
             subject: "Password Reset Request",
             content: resetLink
         );
