@@ -114,7 +114,7 @@ public class AuthService(
     {
         var validationErrors = new Dictionary<string, string>();
 
-        var principal = TokenUtil.ValidateRefreshToken(refreshToken, configuration);
+        var principal = TokenUtil.ValidateToken(refreshToken, configuration);
         if (principal == null)
         {
             validationErrors.Add("token", "Invalid refresh token.");
@@ -227,7 +227,7 @@ public class AuthService(
     {
         Dictionary<string, string> validationErrors = [];
 
-        var principal = TokenUtil.ValidateRefreshToken(resetPasswordDto.Token, configuration);
+        var principal = TokenUtil.ValidateToken(resetPasswordDto.Token, configuration);
 
         if (principal == null)
         {
