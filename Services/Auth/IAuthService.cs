@@ -12,5 +12,5 @@ public interface IAuthService
     Task<ApiResponse<AuthResponseDto>> RefreshUserTokensAsync(string refreshToken);
     Task RemoveRevokedTokenAsync();
     Task<ApiResponse<string>> ForgotPasswordAsync(AuthForgotPasswordDto forgotPasswordDto);
-    Task<ApiResponse<string>> ResetPasswordAsync(AuthResetPasswordDto resetPasswordDto);
+    Task<ApiResponse<string>> ResetPasswordAsync(string token, AuthResetPasswordDto resetPasswordDto);
 }
