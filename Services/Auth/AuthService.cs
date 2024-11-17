@@ -213,7 +213,7 @@ public class AuthService(
 
     public async Task<ApiResponse<string>> ResetPasswordAsync(string token, AuthResetPasswordDto resetPasswordDto)
     {
-        Dictionary<string, string> validationErrors = [];
+        var validationErrors = new Dictionary<string, string>();
 
         var principal = TokenUtil.ValidateToken(token, configuration);
 
