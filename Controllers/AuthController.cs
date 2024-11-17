@@ -17,12 +17,13 @@ public class AuthController(
     [HttpPost("register")]
     public async Task<IActionResult> RegisterUser([FromBody] AuthRegisterDto authRegister)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
+        }
+
         try
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
-            }
 
             var response = await authService.RegisterAsync(authRegister);
 
@@ -45,12 +46,13 @@ public class AuthController(
     [HttpPost("login")]
     public async Task<IActionResult> LoginUser([FromBody] AuthLoginDto authLogin)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
+        }
+
         try
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
-            }
 
             var response = await authService.LoginAsync(authLogin);
 
@@ -122,12 +124,13 @@ public class AuthController(
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] AuthForgotPasswordDto forgotPasswordDto)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
+        }
+
         try
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
-            }
 
             var response = await authService.ForgotPasswordAsync(forgotPasswordDto);
 
@@ -148,12 +151,13 @@ public class AuthController(
     [HttpPost("reset-password/{token}")]
     public async Task<IActionResult> ResetPassword([FromRoute][Required] string token, [FromBody] AuthResetPasswordDto resetPasswordDto)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
+        }
+
         try
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
-            }
 
             var response = await authService.ResetPasswordAsync(token, resetPasswordDto);
 
