@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 using UserAuthentication_ASPNET.Models.Dtos;
 using UserAuthentication_ASPNET.Models.Dtos.Auth;
 using UserAuthentication_ASPNET.Controllers.Utils;
@@ -145,7 +146,7 @@ public class AuthController(
     }
 
     [HttpPost("reset-password/{token}")]
-    public async Task<IActionResult> ResetPassword([FromRoute] string token, [FromBody] AuthResetPasswordDto resetPasswordDto)
+    public async Task<IActionResult> ResetPassword([FromRoute][Required] string token, [FromBody] AuthResetPasswordDto resetPasswordDto)
     {
         try
         {
