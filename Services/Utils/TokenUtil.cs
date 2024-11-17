@@ -63,27 +63,6 @@ public class TokenUtil
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public static string GenerateAccess(User user, IConfiguration configuration)
-    {
-        var expiry = DateTime.UtcNow.AddHours(Convert.ToDouble(configuration["JWT:AccessTokenExpiry"]));
-
-        return GenerateToken(user, configuration, expiry, isAccessToken: true);
-    }
-
-    public static string GenerateRefresh(User user, IConfiguration configuration)
-    {
-        var expiry = DateTime.UtcNow.AddHours(Convert.ToDouble(configuration["JWT:RefreshTokenExpiry"]));
-
-        return GenerateToken(user, configuration, expiry, isAccessToken: false);
-    }
-
-    public static string GeneratePasswordResetToken(User user, IConfiguration configuration)
-    {
-        var expiry = DateTime.UtcNow.AddMinutes(15);
-
-        return GenerateToken(user, configuration, expiry, isAccessToken: false, isPasswordResetToken: true);
-    }
-
     public static AuthResponseDto GenerateTokens(User user, IConfiguration configuration)
     {
         return new AuthResponseDto
