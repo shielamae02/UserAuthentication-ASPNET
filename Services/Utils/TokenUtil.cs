@@ -2,8 +2,8 @@ using System.Text;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using UserAuthentication_ASPNET.Models.Entities;
 using UserAuthentication_ASPNET.Models.Dtos;
+using UserAuthentication_ASPNET.Models.Entities;
 
 namespace UserAuthentication_ASPNET.Services.Utils;
 
@@ -16,7 +16,7 @@ public enum TokenType
 
 public class TokenUtil
 {
-    private static string GenerateToken(User user, IConfiguration configuration, TokenType tokenType)
+    public static string GenerateToken(User user, IConfiguration configuration, TokenType tokenType)
     {
         var expires = DateTime.UtcNow;
 
