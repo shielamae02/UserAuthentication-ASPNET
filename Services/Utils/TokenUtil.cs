@@ -67,8 +67,8 @@ public class TokenUtil
     {
         return new AuthResponseDto
         {
-            Access = GenerateAccess(user, configuration),
-            Refresh = GenerateRefresh(user, configuration)
+            Access = GenerateToken(user, configuration, TokenType.ACCESS),
+            Refresh = GenerateToken(user, configuration, TokenType.REFRESH)
         };
     }
 
