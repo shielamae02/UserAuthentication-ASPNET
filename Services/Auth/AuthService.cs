@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using UserAuthentication_ASPNET.Data;
 using System.IdentityModel.Tokens.Jwt;
 using UserAuthentication_ASPNET.Models.Dtos;
-using System.ComponentModel.DataAnnotations;
 using UserAuthentication_ASPNET.Models.Utils;
 using UserAuthentication_ASPNET.Services.Utils;
 using UserAuthentication_ASPNET.Models.Entities;
@@ -160,8 +159,8 @@ public class AuthService(
 
         var newAccessToken = new AuthResponseDto
         {
-            Access = TokenUtil.GenerateAccess(token.User, configuration),
-            Refresh = TokenUtil.GenerateRefresh(token.User, configuration)
+            Access = TokenUtil.GenerateToken(token.User, configuration, TokenType.ACCESS),
+            Refresh = TokenUtil.GenerateToken(token.User, configuration, TokenType.REFRESH)
         };
 
         return ApiResponse<AuthResponseDto>.SuccessResponse(Success.IS_AUTHENTICATED, newAccessToken);
@@ -189,7 +188,7 @@ public class AuthService(
 
         var resetToken = TokenUtil.GeneratePasswordResetToken(user, configuration);
 
-        var resetLink = $"https:///reset-password?token={resetToken}";
+        var resetLink = $"http://localhost:5077/reset-password?token={resetToken}";
 
         var isEmailSent = await emailService.SendEmailAsync(
             emails: [forgotPasswordDto.Email],
@@ -211,11 +210,11 @@ public class AuthService(
         return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, resetToken);
     }
 
-    public async Task<ApiResponse<string>> ResetPasswordAsync(AuthResetPasswordDto resetPasswordDto)
+    public async Task<ApiResponse<string>> ResetPasswordAsync(string token, AuthResetPasswordDto resetPasswordDto)
     {
         Dictionary<string, string> validationErrors = [];
 
-        var principal = TokenUtil.ValidateToken(resetPasswordDto.Token, configuration);
+        var principal = TokenUtil.ValidateToken(token, configuration);
 
         if (principal == null)
         {
@@ -241,7 +240,10 @@ public class AuthService(
         }
 
         // Find the user
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        var user = await context.Users
+            .Include(u => u.Tokens)
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
         if (user == null)
         {
             validationErrors.Add("user", "Invalid credentials.");
@@ -252,10 +254,37 @@ public class AuthService(
            );
         }
 
-        user.Password = PasswordUtil.HashPassword(resetPasswordDto.Password);
-        await context.SaveChangesAsync();
 
-        return ApiResponse<string>.SuccessResponse(
-            Success.PASSWORD_RESET_SUCCESSFUL, null);
+        using (var transaction = await context.Database.BeginTransactionAsync())
+        {
+            try
+            {
+                var activeTokens = user.Tokens.Where(t => t.Expiration > DateTime.UtcNow && !t.IsRevoked);
+                foreach (var activeToken in activeTokens)
+                {
+                    activeToken.IsRevoked = true;
+                }
+
+                user.Password = PasswordUtil.HashPassword(resetPasswordDto.Password);
+
+                await context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return ApiResponse<string>.SuccessResponse(
+                    Success.PASSWORD_RESET_SUCCESSFUL, null);
+
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                validationErrors.Add("transaction", "An error occurred during password reset.");
+                return ApiResponse<string>.ErrorResponse(
+                    Error.ValidationError,
+                    Error.ErrorType.InternalServerError,
+                    validationErrors
+                );
+            }
+        }
+
     }
 }
