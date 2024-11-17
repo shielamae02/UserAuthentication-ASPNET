@@ -119,11 +119,16 @@ public class AuthController(
     }
 
     [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword([FromBody] string email)
+    public async Task<IActionResult> ForgotPassword([FromBody] AuthForgotPasswordDto forgotPasswordDto)
     {
         try
         {
-            var response = await authService.ForgotPasswordAsync(email);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
+            }
+
+            var response = await authService.ForgotPasswordAsync(forgotPasswordDto);
 
             if (response.Status.Equals("error"))
             {
@@ -139,8 +144,8 @@ public class AuthController(
         }
     }
 
-    [HttpPost("reset-password")]
-    public async Task<IActionResult> ResetPassword([FromBody] AuthResetPasswordDto resetPasswordDto)
+    [HttpPost("reset-password/{token}")]
+    public async Task<IActionResult> ResetPassword([FromRoute] string token, [FromBody] AuthResetPasswordDto resetPasswordDto)
     {
         try
         {
@@ -149,7 +154,7 @@ public class AuthController(
                 return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
             }
 
-            var response = await authService.ResetPasswordAsync(resetPasswordDto);
+            var response = await authService.ResetPasswordAsync(token, resetPasswordDto);
 
             if (response.Status.Equals("error"))
             {
