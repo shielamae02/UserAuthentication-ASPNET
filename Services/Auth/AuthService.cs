@@ -186,7 +186,7 @@ public class AuthService(
             return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, null);
         }
 
-        var resetToken = TokenUtil.GeneratePasswordResetToken(user, configuration);
+        var resetToken = TokenUtil.GenerateToken(user, configuration, TokenType.RESET);
 
         var resetLink = $"http://localhost:5077/reset-password?token={resetToken}";
 
