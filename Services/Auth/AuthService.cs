@@ -22,7 +22,7 @@ public class AuthService(
 {
     public async Task<ApiResponse<AuthResponseDto>> RegisterAsync(AuthRegisterDto authRegister)
     {
-        Dictionary<string, string> validationErrors = [];
+        var validationErrors = new Dictionary<string, string>();
 
         await using var transaction = await context.Database.BeginTransactionAsync();
         try
@@ -68,7 +68,7 @@ public class AuthService(
 
     public async Task<ApiResponse<AuthResponseDto>> LoginAsync(AuthLoginDto authLogin)
     {
-        Dictionary<string, string> validationErrors = [];
+        var validationErrors = new Dictionary<string, string>();
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(authLogin.Email));
 
@@ -165,6 +165,7 @@ public class AuthService(
 
         return ApiResponse<AuthResponseDto>.SuccessResponse(Success.IS_AUTHENTICATED, newAccessToken);
     }
+
     public async Task RemoveRevokedTokenAsync()
     {
         var tokens = await context.Tokens
@@ -226,7 +227,7 @@ public class AuthService(
             );
         }
 
-        var purposeClaim = principal.Claims.FirstOrDefault(c => c.Type == "purpose" && c.Value == "password-reset");
+        var purposeClaim = principal.Claims.FirstOrDefault(c => c.Type == "purpose" && c.Value == "reset-password");
         var userIdClaim = principal.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
 
         if (purposeClaim == null || userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
@@ -253,7 +254,6 @@ public class AuthService(
                validationErrors
            );
         }
-
 
         using (var transaction = await context.Database.BeginTransactionAsync())
         {
