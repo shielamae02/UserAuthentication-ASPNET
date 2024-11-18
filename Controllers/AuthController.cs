@@ -201,8 +201,26 @@ public class AuthController(
         }
     }
 
+    /// <summary>
+    ///     Sends an email with the reset password link.
+    /// </summary>
+    /// <param name="authForgotPassword"></param>
+    /// <returns>
+    ///     Returns an <see cref="IActionResult"/> containing:
+    ///     - <see cref="OkObjectResult"/> if the request is valid.
+    ///     - <see cref="BadRequestObjectResult"/> if the request is invalid.
+    ///     - <see cref="ProblemDetails"/> if an internal server error occurs.
+    /// </returns>
+    /// <response code="200">Sends an email to the user.</response>
+    /// <response code="400">Bad request.</response>
+    /// <response code="500">Internal server error.</response>
     [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword([FromBody] AuthForgotPasswordDto forgotPasswordDto)
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SuccessResponseDto<string>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ForgotPassword([FromBody] AuthForgotPasswordDto authForgotPassword)
     {
         if (!ModelState.IsValid)
         {
@@ -211,7 +229,7 @@ public class AuthController(
 
         try
         {
-            var response = await authService.ForgotPasswordAsync(forgotPasswordDto);
+            var response = await authService.ForgotPasswordAsync(authForgotPassword);
 
             if (response.Status.Equals("error"))
             {
