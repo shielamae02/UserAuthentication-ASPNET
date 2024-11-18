@@ -2,7 +2,7 @@ using AutoMapper;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using UserAuthentication_ASPNET.Data;
-using System.IdentityModel.Tokens.Jwt;
+using UserAuthentication_ASPNET.Models;
 using UserAuthentication_ASPNET.Models.Dtos;
 using UserAuthentication_ASPNET.Models.Utils;
 using UserAuthentication_ASPNET.Services.Utils;
@@ -10,7 +10,6 @@ using UserAuthentication_ASPNET.Models.Entities;
 using UserAuthentication_ASPNET.Models.Response;
 using UserAuthentication_ASPNET.Services.Emails;
 using UserAuthentication_ASPNET.Models.Dtos.Auth;
-using UserAuthentication_ASPNET.Models;
 
 namespace UserAuthentication_ASPNET.Services.AuthService;
 
@@ -182,7 +181,7 @@ public class AuthService(
 
         await SaveRefreshTokenAsync(user, resetToken, jwt.ResetTokenExpiry);
 
-        return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, resetToken);
+        return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, null);
     }
 
     public async Task<ApiResponse<string>> ResetPasswordAsync(string token, AuthResetPasswordDto resetPasswordDto)
