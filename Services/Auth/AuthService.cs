@@ -168,15 +168,9 @@ public class AuthService(
 
     public async Task RemoveRevokedTokenAsync()
     {
-        var tokens = await context.Tokens
+        await context.Tokens
             .Where(t => t.IsRevoked || t.Expiration < DateTime.UtcNow)
-            .ToListAsync();
-
-        if (tokens.Count != 0)
-        {
-            context.Tokens.RemoveRange(tokens);
-            await context.SaveChangesAsync();
-        }
+            .ExecuteDeleteAsync();
     }
 
     public async Task<ApiResponse<string>> ForgotPasswordAsync(AuthForgotPasswordDto forgotPasswordDto)
