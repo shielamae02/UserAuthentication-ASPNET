@@ -180,16 +180,7 @@ public class AuthService(
             );
         }
 
-        var token = new Token
-        {
-            User = user,
-            UserId = user.Id,
-            Refresh = resetToken,
-            Expiration = DateTime.UtcNow.AddMinutes(10)
-        };
-
-        await context.Tokens.AddAsync(token);
-        await context.SaveChangesAsync();
+        await SaveRefreshTokenAsync(user, resetToken, jwt.ResetTokenExpiry);
 
         return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, resetToken);
     }
