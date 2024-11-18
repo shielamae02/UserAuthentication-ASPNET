@@ -14,7 +14,25 @@ public class AuthController(
     IAuthService authService,
     ILogger<AuthController> logger) : ControllerBase
 {
+    /// <summary>
+    ///     Registers a new user.
+    /// </summary>
+    /// <param name="authRegister"></param>
+    /// <returns>
+    ///     Returns an <see cref="IActionResult"/> containing:
+    ///     - <see cref="StatusCodeResult" /> with the access and refresh tokens.  
+    ///     - <see cref="BadRequestObjectResult" /> if the request is invalid.  
+    ///     - <see cref="ProblemDetails" /> if an internal server error occurs.  
+    /// </returns>
+    /// <response code="201"> Returns the access and refresh tokens. </response>
+    /// <response code="400"> Bad request. </response>
+    /// <response code="500"> Internal server error. </response>
     [HttpPost("register")]
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(SuccessResponseDto<AuthResponseDto>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RegisterUser([FromBody] AuthRegisterDto authRegister)
     {
         if (!ModelState.IsValid)
@@ -33,7 +51,7 @@ public class AuthController(
             }
 
             logger.LogInformation("Registration successful for email: {Email}", authRegister.Email);
-            return StatusCode(201, response);
+            return StatusCode(StatusCodes.Status201Created, response);
         }
         catch (Exception ex)
         {
