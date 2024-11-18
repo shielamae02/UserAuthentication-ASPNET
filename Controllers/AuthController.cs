@@ -81,7 +81,7 @@ public class AuthController(
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SuccessResponseDto<AuthResponseDto>))]
     [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponseDto))]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponseDto))]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> LoginUser([FromBody] AuthLoginDto authLogin)
     {
         if (!ModelState.IsValid)
@@ -108,9 +108,35 @@ public class AuthController(
         }
     }
 
+    /// <summary>
+    ///     Refreshes the user's authentication tokens.
+    /// </summary>
+    /// <param name="authRefreshToken"></param>
+    /// <returns>
+    ///     Returns an <see cref="IActionResult"/> containing:
+    ///     - <see cref="OkObjectResult"/> if the request is valid.
+    ///     - <see cref="BadRequestObjectResult"/> if the request is invalid.
+    ///     - <see cref="UnauthorizedObjectResult"/> if a credential is invalid.
+    ///     - <see cref="ProblemDetails"/> if an internal server error occurs.
+    /// </returns>
+    /// <response code="200">Returns the new access and refresh tokens.</response>
+    /// <response code="400">Bad request.</response>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="500">Internal Server Error.</response>
     [HttpPost("refresh")]
-    public async Task<IActionResult> RefreshUserTokens([FromBody] AuthRefreshTokenDto refreshTokenDto)
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SuccessResponseDto<AuthResponseDto>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> RefreshUserTokens([FromBody] AuthRefreshTokenDto authRefreshToken)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
+        }
+
         try
         {
             var userId = ControllerUtil.GetUserId(User);
@@ -118,7 +144,7 @@ public class AuthController(
             if (userId == 1)
                 return Unauthorized();
 
-            var response = await authService.RefreshUserTokensAsync(refreshTokenDto.Token);
+            var response = await authService.RefreshUserTokensAsync(authRefreshToken.Token);
             if (response.Status.Equals("error"))
             {
                 logger.LogWarning("Failed to refresh token for userId: {UserId}", userId);
