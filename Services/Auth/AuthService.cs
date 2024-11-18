@@ -10,6 +10,7 @@ using UserAuthentication_ASPNET.Models.Entities;
 using UserAuthentication_ASPNET.Models.Response;
 using UserAuthentication_ASPNET.Services.Emails;
 using UserAuthentication_ASPNET.Models.Dtos.Auth;
+using UserAuthentication_ASPNET.Models;
 
 namespace UserAuthentication_ASPNET.Services.AuthService;
 
@@ -17,7 +18,7 @@ public class AuthService(
     DataContext context,
     IMapper mapper,
     IEmailService emailService,
-    IConfiguration configuration,
+    JWTSettings jwt,
     ILogger<AuthService> logger
 ) : IAuthService
 {
@@ -41,15 +42,14 @@ public class AuthService(
             await context.Users.AddAsync(user);
             await context.SaveChangesAsync();
 
-            var authDto = TokenUtil.GenerateTokens(user, configuration);
+            var authDto = TokenUtil.GenerateTokens(user, jwt);
 
             var token = new Token
             {
                 UserId = user.Id,
                 User = user,
                 Refresh = authDto.Refresh,
-                Expiration = DateTime.UtcNow.AddDays(
-                    Convert.ToDouble(configuration["JWT:RefreshTokenExpiry"]))
+                Expiration = DateTime.UtcNow.AddDays(jwt.RefreshTokenExpiry)
             };
 
             user.Tokens.Add(token);
@@ -80,14 +80,14 @@ public class AuthService(
                 Error.Unauthorized, Error.ErrorType.Unauthorized, validationErrors);
         }
 
-        var authDto = TokenUtil.GenerateTokens(user, configuration);
+        var authDto = TokenUtil.GenerateTokens(user, jwt);
 
         var token = new Token
         {
             User = user,
             UserId = user.Id,
             Refresh = authDto.Refresh,
-            Expiration = DateTime.UtcNow.AddDays(Convert.ToDouble(configuration["JWT:RefreshTokenExpiry"]))
+            Expiration = DateTime.UtcNow.AddDays(jwt.RefreshTokenExpiry)
         };
 
         await context.Tokens.AddAsync(token);
@@ -114,7 +114,7 @@ public class AuthService(
     {
         var validationErrors = new Dictionary<string, string>();
 
-        var principal = TokenUtil.ValidateToken(refreshToken, configuration);
+        var principal = TokenUtil.ValidateToken(refreshToken, jwt);
         if (principal is null)
         {
             validationErrors.Add("token", "Invalid refresh token.");
@@ -140,7 +140,7 @@ public class AuthService(
         DateTimeOffset.FromUnixTimeSeconds(expSeconds).UtcDateTime < DateTime.UtcNow.AddMinutes(10))
         {
             var user = token.User;
-            var newTokensGenerated = TokenUtil.GenerateTokens(user, configuration);
+            var newTokensGenerated = TokenUtil.GenerateTokens(user, jwt);
 
             token.IsRevoked = true;
 
@@ -148,7 +148,7 @@ public class AuthService(
             {
                 UserId = user.Id,
                 Refresh = newTokensGenerated.Refresh,
-                Expiration = DateTime.UtcNow.AddDays(Convert.ToDouble(configuration["JWT:RefreshTokenExpiry"]))
+                Expiration = DateTime.UtcNow.AddDays(jwt.RefreshTokenExpiry)
             };
 
             user.Tokens.Add(newRefreshToken);
@@ -160,8 +160,8 @@ public class AuthService(
 
         var newAccessToken = new AuthResponseDto
         {
-            Access = TokenUtil.GenerateToken(token.User, configuration, TokenType.ACCESS),
-            Refresh = TokenUtil.GenerateToken(token.User, configuration, TokenType.REFRESH)
+            Access = TokenUtil.GenerateToken(token.User, jwt, TokenType.ACCESS),
+            Refresh = TokenUtil.GenerateToken(token.User, jwt, TokenType.REFRESH)
         };
 
         return ApiResponse<AuthResponseDto>.SuccessResponse(Success.IS_AUTHENTICATED, newAccessToken);
@@ -182,7 +182,7 @@ public class AuthService(
             return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, null);
         }
 
-        var resetToken = TokenUtil.GenerateToken(user, configuration, TokenType.RESET);
+        var resetToken = TokenUtil.GenerateToken(user, jwt, TokenType.RESET);
         var resetLink = $"http://localhost:5077/reset-password?token={resetToken}";
 
         var isEmailSent = await emailService.SendEmailAsync(
@@ -220,7 +220,7 @@ public class AuthService(
     {
         var validationErrors = new Dictionary<string, string>();
 
-        var principal = TokenUtil.ValidateToken(token, configuration);
+        var principal = TokenUtil.ValidateToken(token, jwt);
 
         if (principal is null)
         {
