@@ -127,7 +127,7 @@ public class AuthController(
     [Consumes("application/json")]
     [Produces("application/json")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SuccessResponseDto<AuthResponseDto>))]
-    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponseDto))]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RefreshUserTokens([FromBody] AuthRefreshTokenDto authRefreshToken)
@@ -175,7 +175,7 @@ public class AuthController(
     /// <response code="400">Bad request.</response> 
     /// <response code="500">Internal server error.</response> 
     [HttpPost("logout")]
-    [Produces("application/json")]
+    [Consumes("application/json")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -245,8 +245,26 @@ public class AuthController(
         }
     }
 
+    /// <summary>
+    ///     Resets the user's password using the provided token. 
+    /// </summary>
+    /// <param name="token"></param>
+    /// <param name="authResetPassword"></param>
+    /// <returns>
+    ///     Returns an <see cref="IActionResult"/> containing:
+    ///     - <see cref="OkObjectResult"/> if the request is valid.
+    ///     - <see cref="BadRequestResult"/> if the request is invalid.
+    ///     - <see cref="UnauthorizedObjectResult"/> if the credentials are invalid.
+    ///     - <see cref="ProblemDetails"/> if an internal server error occurs.
+    /// </returns>
     [HttpPost("reset-password/{token}")]
-    public async Task<IActionResult> ResetPassword([FromRoute][Required] string token, [FromBody] AuthResetPasswordDto resetPasswordDto)
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SuccessResponseDto<AuthResponseDto>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ResetPassword([FromRoute][Required] string token, [FromBody] AuthResetPasswordDto authResetPassword)
     {
         if (!ModelState.IsValid)
         {
@@ -255,7 +273,7 @@ public class AuthController(
 
         try
         {
-            var response = await authService.ResetPasswordAsync(token, resetPasswordDto);
+            var response = await authService.ResetPasswordAsync(token, authResetPassword);
 
             if (response.Status.Equals("error"))
             {
