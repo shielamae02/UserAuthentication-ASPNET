@@ -24,7 +24,6 @@ public class AuthController(
 
         try
         {
-
             var response = await authService.RegisterAsync(authRegister);
 
             if (response.Status.Equals("error"))
@@ -53,7 +52,6 @@ public class AuthController(
 
         try
         {
-
             var response = await authService.LoginAsync(authLogin);
 
             if (response.Status.Equals("error"))
@@ -72,7 +70,7 @@ public class AuthController(
     }
 
     [HttpPost("refresh")]
-    public async Task<IActionResult> RefreshUserTokens([FromBody] string refreshToken)
+    public async Task<IActionResult> RefreshUserTokens([FromBody] AuthRefreshTokenDto refreshTokenDto)
     {
         try
         {
@@ -81,7 +79,7 @@ public class AuthController(
             if (userId == 1)
                 return Unauthorized();
 
-            var response = await authService.RefreshUserTokensAsync(refreshToken);
+            var response = await authService.RefreshUserTokensAsync(refreshTokenDto.Token);
             if (response.Status.Equals("error"))
             {
                 logger.LogWarning("Failed to refresh token for userId: {UserId}", userId);
@@ -99,11 +97,11 @@ public class AuthController(
     }
 
     [HttpPost("logout")]
-    public async Task<IActionResult> LogoutUser([FromBody] string refreshToken)
+    public async Task<IActionResult> LogoutUser([FromBody] AuthRefreshTokenDto refreshTokenDto)
     {
         try
         {
-            var response = await authService.LogoutAsync(refreshToken);
+            var response = await authService.LogoutAsync(refreshTokenDto.Token);
 
             if (!response)
             {
@@ -131,7 +129,6 @@ public class AuthController(
 
         try
         {
-
             var response = await authService.ForgotPasswordAsync(forgotPasswordDto);
 
             if (response.Status.Equals("error"))
@@ -158,7 +155,6 @@ public class AuthController(
 
         try
         {
-
             var response = await authService.ResetPasswordAsync(token, resetPasswordDto);
 
             if (response.Status.Equals("error"))
