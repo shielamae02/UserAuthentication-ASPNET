@@ -74,10 +74,10 @@ public class TokenUtil
         };
     }
 
-    public static ClaimsPrincipal? ValidateToken(string token, IConfiguration configuration)
+    public static ClaimsPrincipal? ValidateToken(string token, JWTSettings jwt)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(configuration["JWT:Key"]!);
+        var key = Encoding.UTF8.GetBytes(jwt.Secret);
 
         try
         {
@@ -86,9 +86,9 @@ public class TokenUtil
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(key),
                 ValidateIssuer = true,
-                ValidIssuer = configuration["JWT:Issuer"],
+                ValidIssuer = jwt.Issuer,
                 ValidateAudience = true,
-                ValidAudience = configuration["JWT:Audience"],
+                ValidAudience = jwt.Audience,
                 ValidateLifetime = true,
             }, out SecurityToken validatedToken);
 
