@@ -60,7 +60,28 @@ public class AuthController(
         }
     }
 
+    /// <summary>
+    ///     Authenticates registered user.
+    /// </summary>
+    /// <param name="authLogin"></param>
+    /// <returns>
+    ///     Returns an <see cref="IActionResult"/> containing:
+    ///     - <see cref="OkObjectResult"/> with the access and refresh tokens.
+    ///     - <see cref="BadRequestObjectResult"/> if the request is invalid.
+    ///     - <see cref="UnauthorizedObjectResult"/> if the user entered invalid credentials.
+    ///     - <see cref="ProblemDetails" /> if an internal server error occurs. 
+    /// </returns>
+    /// <response code="200"> Returns the access and refresh tokens. </response>
+    /// <response code="400"> Bad request. </response>
+    /// <response code="401"> Unauthorized access. </response>
+    /// <response code="500"> Internal server error. </response>
     [HttpPost("login")]
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SuccessResponseDto<AuthResponseDto>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError, Type = typeof(ErrorResponseDto))]
     public async Task<IActionResult> LoginUser([FromBody] AuthLoginDto authLogin)
     {
         if (!ModelState.IsValid)
