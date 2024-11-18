@@ -51,7 +51,7 @@ public class TokenUtil
             new DateTimeOffset(expires).ToUnixTimeSeconds().ToString(),
             ClaimValueTypes.Integer64));
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Secret));
+        var key = new SymmetricSecurityKey(Base64UrlEncoder.DecodeBytes(jwt.Key));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
@@ -77,7 +77,7 @@ public class TokenUtil
     public static ClaimsPrincipal? ValidateToken(string token, JWTSettings jwt)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(jwt.Secret);
+        var key = Base64UrlEncoder.DecodeBytes(jwt.Key);
 
         try
         {
