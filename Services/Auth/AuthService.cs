@@ -25,16 +25,16 @@ public class AuthService(
     {
         var validationErrors = new Dictionary<string, string>();
 
+        if (await context.Users.AnyAsync(u => u.Email.Equals(authRegister.Email)))
+        {
+            validationErrors.Add("email", "Invalid email address.");
+            return ApiResponse<AuthResponseDto>.ErrorResponse(
+                Error.ValidationError, Error.ErrorType.ValidationError, validationErrors);
+        }
+
         await using var transaction = await context.Database.BeginTransactionAsync();
         try
         {
-            if (await context.Users.AnyAsync(u => u.Email.Equals(authRegister.Email)))
-            {
-                validationErrors.Add("email", "Invalid email address.");
-                return ApiResponse<AuthResponseDto>.ErrorResponse(
-                    Error.ValidationError, Error.ErrorType.ValidationError, validationErrors);
-            }
-
             var user = mapper.Map<User>(authRegister);
             user.Password = PasswordUtil.HashPassword(authRegister.Password);
 
@@ -183,15 +183,6 @@ public class AuthService(
         }
 
         var resetToken = TokenUtil.GenerateToken(user, configuration, TokenType.RESET);
-
-        var token = new Token
-        {
-            User = user,
-            UserId = user.Id,
-            Refresh = resetToken,
-            Expiration = DateTime.UtcNow.AddMinutes(10)
-        };
-
         var resetLink = $"http://localhost:5077/reset-password?token={resetToken}";
 
         var isEmailSent = await emailService.SendEmailAsync(
@@ -210,6 +201,14 @@ public class AuthService(
                 }}
             );
         }
+
+        var token = new Token
+        {
+            User = user,
+            UserId = user.Id,
+            Refresh = resetToken,
+            Expiration = DateTime.UtcNow.AddMinutes(10)
+        };
 
         await context.Tokens.AddAsync(token);
         await context.SaveChangesAsync();
