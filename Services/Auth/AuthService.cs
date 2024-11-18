@@ -1,4 +1,5 @@
 using AutoMapper;
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using UserAuthentication_ASPNET.Data;
 using System.IdentityModel.Tokens.Jwt;
@@ -72,7 +73,7 @@ public class AuthService(
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(authLogin.Email));
 
-        if (user == null || !PasswordUtil.VerifyPassword(user.Password, authLogin.Password))
+        if (user is null || !PasswordUtil.VerifyPassword(user.Password, authLogin.Password))
         {
             validationErrors.Add("user", "Invalid credentials.");
             return ApiResponse<AuthResponseDto>.ErrorResponse(
@@ -114,7 +115,7 @@ public class AuthService(
         var validationErrors = new Dictionary<string, string>();
 
         var principal = TokenUtil.ValidateToken(refreshToken, configuration);
-        if (principal == null)
+        if (principal is null)
         {
             validationErrors.Add("token", "Invalid refresh token.");
             return ApiResponse<AuthResponseDto>.ErrorResponse(
@@ -125,7 +126,7 @@ public class AuthService(
             .Include(t => t.User)
             .FirstOrDefaultAsync(t => t.Refresh == refreshToken);
 
-        if (token == null || token.IsRevoked || token.Expiration < DateTime.UtcNow)
+        if (token is null || token.IsRevoked || token.Expiration < DateTime.UtcNow)
         {
             validationErrors.Add("token", "Refresh token is already expired or invalid.");
             return ApiResponse<AuthResponseDto>.ErrorResponse(
@@ -176,12 +177,20 @@ public class AuthService(
     public async Task<ApiResponse<string>> ForgotPasswordAsync(AuthForgotPasswordDto forgotPasswordDto)
     {
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(forgotPasswordDto.Email));
-        if (user == null)
+        if (user is null)
         {
             return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, null);
         }
 
         var resetToken = TokenUtil.GenerateToken(user, configuration, TokenType.RESET);
+
+        var token = new Token
+        {
+            User = user,
+            UserId = user.Id,
+            Refresh = resetToken,
+            Expiration = DateTime.UtcNow.AddMinutes(10)
+        };
 
         var resetLink = $"http://localhost:5077/reset-password?token={resetToken}";
 
@@ -202,6 +211,9 @@ public class AuthService(
             );
         }
 
+        await context.Tokens.AddAsync(token);
+        await context.SaveChangesAsync();
+
         return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, resetToken);
     }
 
@@ -211,7 +223,7 @@ public class AuthService(
 
         var principal = TokenUtil.ValidateToken(token, configuration);
 
-        if (principal == null)
+        if (principal is null)
         {
             validationErrors.Add("token", "Invalid token payload.");
             return ApiResponse<string>.ErrorResponse(
@@ -221,10 +233,10 @@ public class AuthService(
             );
         }
 
-        var purposeClaim = principal.Claims.FirstOrDefault(c => c.Type == "purpose" && c.Value == "reset-password");
-        var userIdClaim = principal.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub);
+        var purposeClaim = principal.Claims.FirstOrDefault(c => c.Type == "purpose" && c.Value == "reset-password")?.Value;
+        var emailClaim = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
 
-        if (purposeClaim == null || userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
+        if (string.IsNullOrEmpty(purposeClaim) || string.IsNullOrEmpty(emailClaim))
         {
             validationErrors.Add("token", "Invalid token payload.");
             return ApiResponse<string>.ErrorResponse(
@@ -237,11 +249,26 @@ public class AuthService(
         // Find the user
         var user = await context.Users
             .Include(u => u.Tokens)
-            .FirstOrDefaultAsync(u => u.Id == userId);
+            .FirstOrDefaultAsync(u => u.Email.Equals(emailClaim));
 
-        if (user == null)
+        if (user is null)
         {
             validationErrors.Add("user", "Invalid credentials.");
+            return ApiResponse<string>.ErrorResponse(
+               Error.Unauthorized,
+               Error.ErrorType.Unauthorized,
+               validationErrors
+           );
+        }
+
+        var isTokenValid = user.Tokens.Any(t =>
+                t.Refresh.Equals(token) &&
+                !t.IsRevoked &&
+                t.Expiration > DateTime.UtcNow);
+
+        if (!isTokenValid)
+        {
+            validationErrors.Add("token", "It looks like you clicked on an invalid password reset link. Please try again.");
             return ApiResponse<string>.ErrorResponse(
                Error.Unauthorized,
                Error.ErrorType.Unauthorized,
