@@ -6,10 +6,13 @@ using Newtonsoft.Json.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using UserAuthentication_ASPNET.Data;
+using System.IdentityModel.Tokens.Jwt;
 using UserAuthentication_ASPNET.Services;
 using UserAuthentication_ASPNET.Services.Users;
+using UserAuthentication_ASPNET.Services.Emails;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using UserAuthentication_ASPNET.Services.AuthService;
+using UserAuthentication_ASPNET.Models.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +33,8 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddSwaggerGen();
 
+builder.Services.Configure<Smtp>(builder.Configuration.GetSection("SMTP"));
+
 ConfigureServices(builder.Services, builder.Configuration);
 var app = builder.Build();
 
@@ -42,6 +47,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// Prevent Microsoft Identity override claim names
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -52,21 +60,25 @@ app.Run();
 
 static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
 {
-    // API Versioning
+    #region API Versioning
     services.AddApiVersioning(options =>
     {
         options.AssumeDefaultVersionWhenUnspecified = true;
         options.ReportApiVersions = true;
         options.DefaultApiVersion = new ApiVersion(1, 0);
     });
+    #endregion
 
-    // SQL Server
+
+    #region SQL Server
     services.AddDbContext<DataContext>(options =>
     {
         options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
     });
+    #endregion
 
-    // Authentication
+
+    #region Authentication
     var jwt = configuration.GetSection("JWT");
     var key = jwt["Key"];
 
@@ -88,8 +100,10 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key!))
         };
     });
+    #endregion
 
-    // Swagger Docs
+
+    #region Swagger Docs
     services.AddSwaggerGen(c =>
     {
         c.SwaggerDoc("v1", new OpenApiInfo
@@ -123,19 +137,26 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
             }
         });
     });
+    #endregion
 
-    // Disable automatic model validation
+
+    #region Suppress model validation
     services.Configure<ApiBehaviorOptions>(options =>
     {
         options.SuppressModelStateInvalidFilter = true;
     });
+    #endregion
 
 
     services.AddLogging();
 
     services.AddTransient<DataContext>();
 
+    services.AddSingleton<IEmailService, EmailService>();
+    services.AddSingleton<EmailQueue>();
+
     services.AddHostedService<AuthBackgroundService>();
+    services.AddHostedService<EmailBackgroundService>();
 
     services.AddScoped<IAuthService, AuthService>();
     services.AddScoped<IUserService, UserService>();
