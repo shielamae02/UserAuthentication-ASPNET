@@ -1,5 +1,5 @@
-using System.Text;
 using Newtonsoft.Json;
+using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Converters;
@@ -141,9 +141,9 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
             }
         });
 
-        // var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-        // var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-        // c.IncludeXmlComments(xmlPath);
+        var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        c.IncludeXmlComments(xmlPath);
     });
     #endregion
 
