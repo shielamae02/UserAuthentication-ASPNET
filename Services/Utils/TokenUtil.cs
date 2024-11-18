@@ -65,12 +65,12 @@ public class TokenUtil
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public static AuthResponseDto GenerateTokens(User user, IConfiguration configuration)
+    public static AuthResponseDto GenerateTokens(User user, JWTSettings jwt)
     {
         return new AuthResponseDto
         {
-            Access = GenerateToken(user, configuration, TokenType.ACCESS),
-            Refresh = GenerateToken(user, configuration, TokenType.REFRESH)
+            Access = GenerateToken(user, jwt, TokenType.ACCESS),
+            Refresh = GenerateToken(user, jwt, TokenType.REFRESH)
         };
     }
 
