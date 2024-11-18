@@ -127,7 +127,7 @@ public class AuthService(
 
         if (token == null || token.IsRevoked || token.Expiration < DateTime.UtcNow)
         {
-            validationErrors.Add("Token", "Refresh token is already expired or invalid.");
+            validationErrors.Add("token", "Refresh token is already expired or invalid.");
             return ApiResponse<AuthResponseDto>.ErrorResponse(
                 Error.Unauthorized, Error.ErrorType.Unauthorized, validationErrors);
         }
