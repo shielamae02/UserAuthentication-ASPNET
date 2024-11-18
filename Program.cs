@@ -3,11 +3,14 @@ using Newtonsoft.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Converters;
+using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using UserAuthentication_ASPNET.Data;
 using System.IdentityModel.Tokens.Jwt;
+using UserAuthentication_ASPNET.Models;
 using UserAuthentication_ASPNET.Services;
+using UserAuthentication_ASPNET.Models.Utils;
 using UserAuthentication_ASPNET.Services.Users;
 using UserAuthentication_ASPNET.Services.Emails;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -97,7 +100,8 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
             ValidateIssuerSigningKey = true,
             ValidIssuer = jwt["Issuer"],
             ValidAudience = jwt["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key!))
+            ClockSkew = TimeSpan.Zero,
+            IssuerSigningKey = new SymmetricSecurityKey(Base64UrlEncoder.DecodeBytes(key!))
         };
     });
     #endregion
@@ -136,11 +140,15 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
                 []
             }
         });
+
+        // var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        // var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+        // c.IncludeXmlComments(xmlPath);
     });
     #endregion
 
 
-    #region Suppress model validation
+    #region Validation Configuration
     services.Configure<ApiBehaviorOptions>(options =>
     {
         options.SuppressModelStateInvalidFilter = true;
@@ -150,14 +158,38 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
 
     services.AddLogging();
 
-    services.AddTransient<DataContext>();
+
+    #region JWT Data Binding
+    services.Configure<JWTSettings>(configuration.GetSection("JWT"));
+    services.AddSingleton(resolver =>
+        resolver.GetRequiredService<IOptions<JWTSettings>>().Value);
+    #endregion
+
+    #region SMTP Data Binding
+    services.Configure<SMTPSettings>(configuration.GetSection("SMTP"));
+    services.AddSingleton(resolver =>
+        resolver.GetRequiredService<IOptions<SMTPSettings>>().Value);
+    #endregion
+
+    #region Application Data Binding
+    services.Configure<AppSettings>(configuration.GetSection("Application"));
+    services.AddSingleton(resolver =>
+        resolver.GetRequiredService<IOptions<AppSettings>>().Value);
+    #endregion
+
+    #region Background Service
+    services.AddHostedService<AuthBackgroundService>();
+    services.AddHostedService<EmailBackgroundService>();
+    #endregion
 
     services.AddSingleton<IEmailService, EmailService>();
     services.AddSingleton<EmailQueue>();
 
-    services.AddHostedService<AuthBackgroundService>();
-    services.AddHostedService<EmailBackgroundService>();
-
+    #region Services Configuration
     services.AddScoped<IAuthService, AuthService>();
     services.AddScoped<IUserService, UserService>();
+    #endregion
+
+
+
 }
