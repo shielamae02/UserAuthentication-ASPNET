@@ -5,7 +5,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>UserAuthentication_ASPNET</RootNamespace>
-     <NoWarn>CS0168;CS0219;CS8601;CS8602</NoWarn>
+    <NoWarn>CS0168;CS0219;CS8601;CS8602;1591;1570</NoWarn>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

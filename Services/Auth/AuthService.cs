@@ -144,16 +144,9 @@ public class AuthService(
         }
     }
 
-    public async Task RemoveRevokedTokenAsync()
+    public async Task<ApiResponse<string>> ForgotPasswordAsync(AuthForgotPasswordDto authForgotPassword)
     {
-        await context.Tokens
-            .Where(t => t.IsRevoked || t.Expiration < DateTime.UtcNow)
-            .ExecuteDeleteAsync();
-    }
-
-    public async Task<ApiResponse<string>> ForgotPasswordAsync(AuthForgotPasswordDto forgotPasswordDto)
-    {
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(forgotPasswordDto.Email));
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(authForgotPassword.Email));
         if (user is null)
         {
             return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, null);
@@ -163,7 +156,7 @@ public class AuthService(
         var resetLink = $"http://localhost:5077/reset-password?token={resetToken}";
 
         var isEmailSent = await emailService.SendEmailAsync(
-            emails: [forgotPasswordDto.Email],
+            emails: [authForgotPassword.Email],
             subject: "Password Reset Request",
             content: resetLink
         );
@@ -184,7 +177,7 @@ public class AuthService(
         return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, null);
     }
 
-    public async Task<ApiResponse<string>> ResetPasswordAsync(string token, AuthResetPasswordDto resetPasswordDto)
+    public async Task<ApiResponse<string>> ResetPasswordAsync(string token, AuthResetPasswordDto authResetPassword)
     {
         var validationErrors = new Dictionary<string, string>();
 
@@ -253,7 +246,7 @@ public class AuthService(
                     activeToken.IsRevoked = true;
                 }
 
-                user.Password = PasswordUtil.HashPassword(resetPasswordDto.Password);
+                user.Password = PasswordUtil.HashPassword(authResetPassword.Password);
 
                 await context.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -289,5 +282,12 @@ public class AuthService(
         user.Tokens.Add(token);
         await context.Tokens.AddAsync(token);
         await context.SaveChangesAsync();
+    }
+
+    public async Task RemoveRevokedTokenAsync()
+    {
+        await context.Tokens
+            .Where(t => t.IsRevoked || t.Expiration < DateTime.UtcNow)
+            .ExecuteDeleteAsync();
     }
 }

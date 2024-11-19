@@ -14,7 +14,25 @@ public class AuthController(
     IAuthService authService,
     ILogger<AuthController> logger) : ControllerBase
 {
+    /// <summary>
+    ///     Registers a new user.
+    /// </summary>
+    /// <param name="authRegister"></param>
+    /// <returns>
+    ///     Returns an <see cref="IActionResult"/> containing:
+    ///     - <see cref="StatusCodeResult" /> with the access and refresh tokens.  
+    ///     - <see cref="BadRequestObjectResult" /> if the request is invalid.  
+    ///     - <see cref="ProblemDetails" /> if an internal server error occurs.  
+    /// </returns>
+    /// <response code="201"> Returns the access and refresh tokens. </response>
+    /// <response code="400"> Bad request. </response>
+    /// <response code="500"> Internal server error. </response>
     [HttpPost("register")]
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(SuccessResponseDto<AuthResponseDto>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> RegisterUser([FromBody] AuthRegisterDto authRegister)
     {
         if (!ModelState.IsValid)
@@ -33,7 +51,7 @@ public class AuthController(
             }
 
             logger.LogInformation("Registration successful for email: {Email}", authRegister.Email);
-            return StatusCode(201, response);
+            return StatusCode(StatusCodes.Status201Created, response);
         }
         catch (Exception ex)
         {
@@ -42,7 +60,28 @@ public class AuthController(
         }
     }
 
+    /// <summary>
+    ///     Authenticates registered user.
+    /// </summary>
+    /// <param name="authLogin"></param>
+    /// <returns>
+    ///     Returns an <see cref="IActionResult"/> containing:
+    ///     - <see cref="OkObjectResult"/> with the access and refresh tokens.
+    ///     - <see cref="BadRequestObjectResult"/> if the request is invalid.
+    ///     - <see cref="UnauthorizedObjectResult"/> if the user entered invalid credentials.
+    ///     - <see cref="ProblemDetails" /> if an internal server error occurs. 
+    /// </returns>
+    /// <response code="200"> Returns the access and refresh tokens. </response>
+    /// <response code="400"> Bad request. </response>
+    /// <response code="401"> Unauthorized access. </response>
+    /// <response code="500"> Internal server error. </response>
     [HttpPost("login")]
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SuccessResponseDto<AuthResponseDto>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> LoginUser([FromBody] AuthLoginDto authLogin)
     {
         if (!ModelState.IsValid)
@@ -69,9 +108,35 @@ public class AuthController(
         }
     }
 
+    /// <summary>
+    ///     Refreshes the user's authentication tokens.
+    /// </summary>
+    /// <param name="authRefreshToken"></param>
+    /// <returns>
+    ///     Returns an <see cref="IActionResult"/> containing:
+    ///     - <see cref="OkObjectResult"/> if the request is valid.
+    ///     - <see cref="BadRequestObjectResult"/> if the request is invalid.
+    ///     - <see cref="UnauthorizedObjectResult"/> if a credential is invalid.
+    ///     - <see cref="ProblemDetails"/> if an internal server error occurs.
+    /// </returns>
+    /// <response code="200">Returns the new access and refresh tokens.</response>
+    /// <response code="400">Bad request.</response>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="500">Internal Server Error.</response>
     [HttpPost("refresh")]
-    public async Task<IActionResult> RefreshUserTokens([FromBody] AuthRefreshTokenDto refreshTokenDto)
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SuccessResponseDto<AuthResponseDto>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> RefreshUserTokens([FromBody] AuthRefreshTokenDto authRefreshToken)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ControllerUtil.GenerateValidationError<AuthResponseDto>(ModelState));
+        }
+
         try
         {
             var userId = ControllerUtil.GetUserId(User);
@@ -79,7 +144,7 @@ public class AuthController(
             if (userId == 1)
                 return Unauthorized();
 
-            var response = await authService.RefreshUserTokensAsync(refreshTokenDto.Token);
+            var response = await authService.RefreshUserTokensAsync(authRefreshToken.Token);
             if (response.Status.Equals("error"))
             {
                 logger.LogWarning("Failed to refresh token for userId: {UserId}", userId);
@@ -96,12 +161,29 @@ public class AuthController(
         }
     }
 
+    /// <summary>
+    ///     Blacklists the user's refresh token.
+    /// </summary>
+    /// <param name="authRefreshToken"></param>
+    /// <returns>
+    ///     Returns an <see cref="IActionResult"/> contaning:
+    ///     - <see cref="NoContentResult"/> if the request is valid.
+    ///     - <see cref="BadRequestObjectResult"/> if the request is invalid.
+    ///     - <see cref="ProblemDetails"/> if an internal server error occurs.
+    /// </returns>
+    /// <response code="204">No content.</response> 
+    /// <response code="400">Bad request.</response> 
+    /// <response code="500">Internal server error.</response> 
     [HttpPost("logout")]
-    public async Task<IActionResult> LogoutUser([FromBody] AuthRefreshTokenDto refreshTokenDto)
+    [Consumes("application/json")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> LogoutUser([FromBody] AuthRefreshTokenDto authRefreshToken)
     {
         try
         {
-            var response = await authService.LogoutAsync(refreshTokenDto.Token);
+            var response = await authService.LogoutAsync(authRefreshToken.Token);
 
             if (!response)
             {
@@ -119,8 +201,26 @@ public class AuthController(
         }
     }
 
+    /// <summary>
+    ///     Sends an email with the reset password link.
+    /// </summary>
+    /// <param name="authForgotPassword"></param>
+    /// <returns>
+    ///     Returns an <see cref="IActionResult"/> containing:
+    ///     - <see cref="OkObjectResult"/> if the request is valid.
+    ///     - <see cref="BadRequestObjectResult"/> if the request is invalid.
+    ///     - <see cref="ProblemDetails"/> if an internal server error occurs.
+    /// </returns>
+    /// <response code="200">Sends an email to the user.</response>
+    /// <response code="400">Bad request.</response>
+    /// <response code="500">Internal server error.</response>
     [HttpPost("forgot-password")]
-    public async Task<IActionResult> ForgotPassword([FromBody] AuthForgotPasswordDto forgotPasswordDto)
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SuccessResponseDto<string>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ForgotPassword([FromBody] AuthForgotPasswordDto authForgotPassword)
     {
         if (!ModelState.IsValid)
         {
@@ -129,7 +229,7 @@ public class AuthController(
 
         try
         {
-            var response = await authService.ForgotPasswordAsync(forgotPasswordDto);
+            var response = await authService.ForgotPasswordAsync(authForgotPassword);
 
             if (response.Status.Equals("error"))
             {
@@ -145,8 +245,26 @@ public class AuthController(
         }
     }
 
+    /// <summary>
+    ///     Resets the user's password using the provided token. 
+    /// </summary>
+    /// <param name="token"></param>
+    /// <param name="authResetPassword"></param>
+    /// <returns>
+    ///     Returns an <see cref="IActionResult"/> containing:
+    ///     - <see cref="OkObjectResult"/> if the request is valid.
+    ///     - <see cref="BadRequestResult"/> if the request is invalid.
+    ///     - <see cref="UnauthorizedObjectResult"/> if the credentials are invalid.
+    ///     - <see cref="ProblemDetails"/> if an internal server error occurs.
+    /// </returns>
     [HttpPost("reset-password/{token}")]
-    public async Task<IActionResult> ResetPassword([FromRoute][Required] string token, [FromBody] AuthResetPasswordDto resetPasswordDto)
+    [Consumes("application/json")]
+    [Produces("application/json")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SuccessResponseDto<AuthResponseDto>))]
+    [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized, Type = typeof(ErrorResponseDto))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ResetPassword([FromRoute][Required] string token, [FromBody] AuthResetPasswordDto authResetPassword)
     {
         if (!ModelState.IsValid)
         {
@@ -155,7 +273,7 @@ public class AuthController(
 
         try
         {
-            var response = await authService.ResetPasswordAsync(token, resetPasswordDto);
+            var response = await authService.ResetPasswordAsync(token, authResetPassword);
 
             if (response.Status.Equals("error"))
             {
