@@ -1,0 +1,41 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sql
+    hostname: sql
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "MyStrongPass123"
+      MSSQL_PID: "Evaluation"
+    networks:
+      - app-network
+    restart: always
+
+  webapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: "http://+:80"
+      ConnectionStrings__DefaultConnection: "Data Source=db;Initial Catalog=AuthDB;User ID=SA;Password=MyStrongPass123;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;"
+      JWT__Key: "7voAFY5IWzrkZoSXOUIrn00C5pR9stq8X2Xx45jT5vM"
+      JWT__Issuer: "http://localhost:8080/"
+      JWT__Audience: "http://localhost:8080/"
+      SMTP__Server: "smtp.gmail.com"
+      SMTP__Port: 587
+      SMTP__Username: "no.reply.devservice@gmail.com"
+      SMTP__Password: "zwss paae keci rxts"
+      Application__Url: "http://localhost:8080"
+    depends_on:
+      - db
+    networks:
+      - app-network
+    restart: always
+
+networks:
+  app-network:

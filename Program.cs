@@ -15,7 +15,6 @@ using UserAuthentication_ASPNET.Services.Users;
 using UserAuthentication_ASPNET.Services.Emails;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using UserAuthentication_ASPNET.Services.AuthService;
-using UserAuthentication_ASPNET.Models.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +27,16 @@ builder.Services.AddControllers()
         options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
     });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
@@ -36,10 +45,17 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddSwaggerGen();
 
-builder.Services.Configure<Smtp>(builder.Configuration.GetSection("SMTP"));
-
 ConfigureServices(builder.Services, builder.Configuration);
 var app = builder.Build();
+
+#region Automatic Database Migration
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<DataContext>();
+    context.Database.Migrate();
+}
+#endregion
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -53,6 +69,7 @@ app.UseHttpsRedirection();
 // Prevent Microsoft Identity override claim names
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
