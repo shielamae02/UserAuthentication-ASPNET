@@ -26,6 +26,9 @@ services:
       JWT__Key: "7voAFY5IWzrkZoSXOUIrn00C5pR9stq8X2Xx45jT5vM"
       JWT__Issuer: "http://localhost:8080/"
       JWT__Audience: "http://localhost:8080/"
+      JWT_AccessTokenExpiry: 1
+      JWT_RefreshTokenExpiry: 1
+      JWT_ResetTokenExpiry: 10
       SMTP__Server: "smtp.gmail.com"
       SMTP__Port: 587
       SMTP__Username: "no.reply.devservice@gmail.com"
