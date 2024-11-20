@@ -59,7 +59,7 @@ cd UserAuthentication-ASPNET
 ⚙️ Without Docker
 
 1. Build and run the program
-   ```json
+   ```bash
    dotnet build
    dotnet run
    ```
@@ -68,7 +68,7 @@ cd UserAuthentication-ASPNET
 
 1. Create a .env file in the root of your project and populate it with the following values, as shown in the env.sample file:
 
-   ```json
+   ```
    # Base URL for constructing email redirection links (e.g., password reset).
    APPLICATION_URL=""
 
@@ -92,9 +92,11 @@ cd UserAuthentication-ASPNET
 
 1. Build and run the Docker containers:
 
-   ```json
+   ```bash
    docker-compose up --build
    ```
+
+---
 
 ## 📩 Contact
 
