@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using System.Reflection;
+using AspNetCoreRateLimit;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Converters;
@@ -15,6 +16,7 @@ using UserAuthentication_ASPNET.Services.Users;
 using UserAuthentication_ASPNET.Services.Emails;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using UserAuthentication_ASPNET.Services.AuthService;
+using UserAuthentication_ASPNET.Models.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -123,6 +125,27 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
     });
     #endregion
 
+    #region Rate Limit Configuration
+    services.Configure<IpRateLimitOptions>(options =>
+    {
+        options.GeneralRules = new List<RateLimitRule>
+        {
+            new RateLimitRule
+            {
+                Endpoint = "/api/v*/auth/login",
+                Period = "1m",
+                Limit = 3
+            },
+            new RateLimitRule
+            {
+                Endpoint = "/api/v*/auth/forgot-password",
+                Period = "1m",
+                Limit = 3
+            }
+        };
+    });
+    #endregion
+
 
     #region Swagger Docs
     services.AddSwaggerGen(c =>
@@ -174,6 +197,8 @@ static void ConfigureServices(IServiceCollection services, IConfiguration config
 
 
     services.AddLogging();
+    services.AddHttpContextAccessor();
+    services.AddMemoryCache();
 
 
     #region JWT Data Binding
