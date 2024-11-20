@@ -18,6 +18,7 @@ public class AuthService(
     IMapper mapper,
     IEmailService emailService,
     JWTSettings jwt,
+    IHttpContextAccessor httpContext,
     ILogger<AuthService> logger
 ) : IAuthService
 {
@@ -57,6 +58,15 @@ public class AuthService(
     public async Task<ApiResponse<AuthResponseDto>> LoginAsync(AuthLoginDto authLogin)
     {
         var validationErrors = new Dictionary<string, string>();
+        var userIp = httpContext.HttpContext.Connection.RemoteIpAddress?.ToString();
+        var loginEndpoint = "/api/v*/auth/login";
+
+        if (RateLimitUtil.IsRateLimitExceeded(userIp!, loginEndpoint))
+        {
+            validationErrors.Add("rate_limit", "Too many requests. Please try again later.");
+            return ApiResponse<AuthResponseDto>.ErrorResponse(
+                Error.TooManyRequests, Error.ErrorType.BadRequest, validationErrors);
+        }
 
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(authLogin.Email));
 
@@ -146,6 +156,17 @@ public class AuthService(
 
     public async Task<ApiResponse<string>> ForgotPasswordAsync(AuthForgotPasswordDto authForgotPassword)
     {
+        var validationErrors = new Dictionary<string, string>();
+        var userIp = httpContext.HttpContext.Connection.RemoteIpAddress?.ToString();
+        var forgotPasswordEndpoint = "/api/v*/auth/forgot-password";
+
+        if (RateLimitUtil.IsRateLimitExceeded(userIp!, forgotPasswordEndpoint))
+        {
+            validationErrors.Add("rate_limit", "Too many requests. Please try again later.");
+            return ApiResponse<string>.ErrorResponse(
+                Error.TooManyRequests, Error.ErrorType.BadRequest, validationErrors);
+        }
+
         var user = await context.Users.FirstOrDefaultAsync(u => u.Email.Equals(authForgotPassword.Email));
         if (user is null)
         {
@@ -174,7 +195,7 @@ public class AuthService(
 
         await SaveRefreshTokenAsync(user, resetToken, jwt.ResetTokenExpiry);
 
-        return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, null);
+        return ApiResponse<string>.SuccessResponse(Success.PASSWORD_RESET_INSTRUCTION_SENT, resetToken);
     }
 
     public async Task<ApiResponse<string>> ResetPasswordAsync(string token, AuthResetPasswordDto authResetPassword)

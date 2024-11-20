@@ -1,15 +1,15 @@
+using Polly;
+using MimeKit;
+using Polly.Retry;
 using MailKit.Security;
 using MailKit.Net.Smtp;
 using Microsoft.Extensions.Options;
-using MimeKit;
-using Polly;
-using Polly.Retry;
-using UserAuthentication_ASPNET.Models.Configurations;
+using UserAuthentication_ASPNET.Models.Utils;
 
 namespace UserAuthentication_ASPNET.Services.Emails;
 
 public class EmailService(
-    IOptions<Smtp> smtpOptions,
+    IOptions<SMTPSettings> smtpOptions,
     ILogger<EmailService> logger) : IEmailService
 {
     private readonly static AsyncRetryPolicy RetryPolicy = Policy
@@ -23,7 +23,7 @@ public class EmailService(
                     $"Retry {retryCount} encountered an error: {exception.Message}. Waiting {timeSpan} before next retry.");
             });
 
-    private readonly Smtp _smtp = smtpOptions.Value;
+    private readonly SMTPSettings _smtp = smtpOptions.Value;
 
     public async Task<bool> SendEmailAsync(IEnumerable<string> emails, string subject, string content)
     {

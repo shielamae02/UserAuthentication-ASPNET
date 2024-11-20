@@ -16,6 +16,7 @@ public static class Error
     public const string NotFound = "Resource not found";
     public const string AlreadyExists = "Already exists";
     public const string EmailSendFailed = "Failed to send email";
+    public const string TooManyRequests = "Rate limit exceeded";
 
 
     public static string FIELD_IS_REQUIRED(string field)

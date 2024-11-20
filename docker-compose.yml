@@ -19,18 +19,23 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8080:80"
+    env_file:
+      - .env
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: "http://+:80"
-      ConnectionStrings__DefaultConnection: "Data Source=db;Initial Catalog=AuthDB;User ID=SA;Password=MyStrongPass123;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;"
-      JWT__Key: "7voAFY5IWzrkZoSXOUIrn00C5pR9stq8X2Xx45jT5vM"
-      JWT__Issuer: "http://localhost:8080/"
-      JWT__Audience: "http://localhost:8080/"
+      ConnectionStrings__DefaultConnection: "${DEFAULT_CONNECTION}"
+      JWT__Key: "${JWT_SECRET}"
+      JWT__Issuer: "${JWT_ISSUER}"
+      JWT__Audience: "${JWT_AUDIENCE}"
+      JWT_AccessTokenExpiry: "${JWT_ACCESS_TOKEN_EXPIRY}"
+      JWT_RefreshTokenExpiry: "${JWT_REFRESH_TOKEN_EXPIRY}"
+      JWT_ResetTokenExpiry: "${JWT_RESET_TOKEN_EXPIRY}"
       SMTP__Server: "smtp.gmail.com"
       SMTP__Port: 587
-      SMTP__Username: "no.reply.devservice@gmail.com"
-      SMTP__Password: "zwss paae keci rxts"
-      Application__Url: "http://localhost:8080"
+      SMTP__Username: "${SMTP_USERNAME}"
+      SMTP__Password: "${SMTP_PASSWORD}"
+      Application__Url: "${APPLICATION_URL}"
     depends_on:
       - db
     networks:
